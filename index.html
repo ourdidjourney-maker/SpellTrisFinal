@@ -864,6 +864,11 @@
       <button id="sbxReset" class="sbx-btn ghost">Reset</button>
       <input type="file" id="sbxFile" accept="application/json,.json" style="display:none">
     </div>
+    <div class="sbx-sep">Debug</div>
+    <div class="sbx-btns">
+      <button id="sbxForce" class="sbx-btn">Force play</button>
+      <button id="sbxDbgHud" class="sbx-btn ghost">Debug HUD</button>
+    </div>
     <div id="sbxMsg" class="sbx-msg"></div>
   </div>
 </div>
@@ -881,7 +886,7 @@
     <div class="setup">
       <div class="row"><span>Game mode</span>
         <div class="seg" id="segMode">
-          <button data-mode="classic" class="on">Classic</button><button data-mode="antigrav">Anti-Gravity</button>
+          <button data-mode="classic" class="on">Classic</button><button data-mode="antigrav">Anti-Gravity</button><button data-mode="sandbox">Sandbox</button>
         </div>
       </div>
       <div class="row"><span>Difficulty</span>
@@ -1129,6 +1134,10 @@
   </div>
 </div>
 
+<div id="sbxDebug" style="display:none;position:fixed;left:8px;bottom:8px;z-index:120;max-width:min(94vw,420px);
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;line-height:1.45;color:#bff3ff;
+  background:rgba(6,12,26,.93);border:1px solid rgba(56,232,255,.5);border-radius:10px;padding:9px 11px;
+  box-shadow:0 8px 22px rgba(0,0,0,.55);white-space:pre-wrap;pointer-events:none;"></div>
 <div class="toast" id="toast"></div>
 
 <div class="overlay hide" id="bitScreen">
@@ -3746,6 +3755,7 @@
 
   function loop(now){
     requestAnimationFrame(loop);
+    if(_sbxDebugOn){ try{ updateSbxDebug(); }catch(e){} }
     if(!lastT) lastT=now;
     const dt=Math.min(now-lastT,50);
     const realDt=now-lastT; lastT=now;
@@ -4001,8 +4011,41 @@
     _sbxSetVar('--coral',s.coral); _sbxSetVar('--jade',s.jade); _sbxSetVar('--amber',s.amber); _sbxSetVar('--ink',s.ink);
     HEAT_STOPS[0].c=s.heat0.slice(); HEAT_STOPS[2].c=s.heat2.slice(); HEAT_STOPS[3].c=s.heat3.slice();
     _sbxSaved=null;
+    _sbxDebugOn=false; { const _dh=$("sbxDebug"); if(_dh) _dh.style.display="none"; }
   }
   function _sbxMsg(t){ const m=$("sbxMsg"); if(m){ m.textContent=t; clearTimeout(_sbxMsg._t); _sbxMsg._t=setTimeout(()=>{ if(m) m.textContent=""; },2200); } }
+  let _sbxDebugOn=false;
+  // Live readout of the flags that gate the game loop + the last captured exception. This is how we
+  // catch the sandbox lockup in the act: whatever throws in the loop lands in lastError and shows here.
+  function updateSbxDebug(){
+    const el=$("sbxDebug"); if(!el) return;
+    if(!_sbxDebugOn){ el.style.display="none"; return; }
+    el.style.display="block";
+    const e=lastError;
+    let dl="-"; try{ if(AG_TIMER[mainTimerIdx]>0 && mainPieceDeadline) dl=Math.round(mainPieceDeadline-nowMs())+"ms"; }catch(_){}
+    let s="SPELLTRIS \u00b7 sandbox debug\n"+
+      "mode="+gameMode+"   state="+state+"\n"+
+      "resolving="+resolving+"   chainTimer="+(_chainTimer?"PENDING":"0")+"\n"+
+      "active="+(active?("yes col"+active.col+(active.mate?"+mate":"")+(active.ag?" ag":"")):"NULL")+
+        "   demo="+demoOn+"   bonus="+bonusActive+"\n"+
+      "board="+COLS+"x"+ROWS+"   spawnCol="+spawnCol+"   autolock="+dl+"\n";
+    if(e){ s+="\u26a0 LAST ERROR ["+e.kind+"] +"+e.t+"ms\n"+e.msg+"\n"+((e.stack||"").split("\n")[0]||""); }
+    else { s+="\u2713 no errors captured"; }
+    el.textContent=s;
+  }
+  // Panic button: cancel any pending cascade, clear every flag that can jam the loop, and get a brick
+  // moving again. This is the "force play" escape hatch for when the sim locks up mid-mod.
+  function sbxForcePlay(){
+    if(_chainTimer){ clearTimeout(_chainTimer); _chainTimer=0; }
+    resolving=false; bonusActive=false; _bonusArm=0;
+    _demoLast=null; _demoTarget=null;
+    if(state==="pause"){ state="play"; const b=$("bPause"); if(b) b.textContent="\u23F8"; }
+    try{ if(state==="play" && !active) spawn(); }catch(err){ recordError("forceplay", err&&err.message, err&&err.stack); }
+    if(active){ lastMoveT=nowMs(); try{ if(AG_TIMER[mainTimerIdx]>0) mainPieceDeadline=nowMs()+AG_TIMER[mainTimerIdx]*1000; }catch(_){} }
+    lastError=null;
+    _sbxMsg("Force-play \u2014 cleared the locks.");
+    if(_sbxDebugOn) updateSbxDebug();
+  }
   // rebuild THIS game's board at a new size (only the sandbox board — nothing shared)
   function sbxApplyBoard(){
     // A resize mid-cascade would let a pending chain step fire against the NEW grid using the
@@ -4162,6 +4205,8 @@
     chk("sbxSmoke",v=>{ smokeOn=v; if(!smokeOn) smoke=[]; });
     chk("sbxBonus",v=>{ bonusEnabled=v; });
     on("sbxApplyBoard","click",sbxApplyBoard);
+    on("sbxForce","click",sbxForcePlay);
+    on("sbxDbgHud","click",()=>{ _sbxDebugOn=!_sbxDebugOn; const b=$("sbxDbgHud"); if(b) b.classList.toggle("on",_sbxDebugOn); updateSbxDebug(); _sbxMsg(_sbxDebugOn?"Debug HUD on.":"Debug HUD off."); });
     on("sbxSave","click",sbxSave);
     on("sbxLoad","click",sbxLoad);
     on("sbxExport","click",sbxExport);
@@ -4354,7 +4399,7 @@
   //  START / RESET
   // ============================================================
   function startGame(){
-    if(gameMode==="sandbox" && !_sbxSaved) sandboxSnapshot();   // borrow the real defaults BEFORE sandbox can change anything
+    if(gameMode==="sandbox" && !_sbxSaved){ sandboxSnapshot(); _sbxDebugOn=true; }   // borrow the real defaults BEFORE sandbox can change anything; HUD on for debugging
     if(actx && actx.state==="suspended") actx.resume();
     seedDict();
     rebuildBag();
