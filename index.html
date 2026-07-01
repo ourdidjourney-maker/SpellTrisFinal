@@ -266,6 +266,13 @@
     0%,100%{box-shadow:inset 0 1px 0 rgba(255,255,255,.28), 0 0 11px rgba(255,150,100,.32), 0 3px 8px rgba(0,0,0,.4);}
     50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.32), 0 0 24px rgba(255,176,110,.62), 0 3px 8px rgba(0,0,0,.4);}
   }
+  /* molten lock flash: a freshly locked/landed brick flares bright yellow then cools orange -> red ->
+     back to its own regular styling (the overlay fades out, revealing the tile beneath). Smoke-gated. */
+  .tile .heatflash{position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+    background:linear-gradient(180deg,rgba(255,251,214,1),rgba(255,234,116,1));
+    box-shadow:inset 0 0 10px rgba(255,255,245,.9),inset 0 3px 0 rgba(255,255,250,.95),0 0 34px rgba(255,238,150,.95);
+    animation:lockCool 4.2s cubic-bezier(.22,.61,.36,1) forwards;}
+  @keyframes lockCool{ 0%{opacity:1;} 20%{opacity:1;} 100%{opacity:0;} }
 
   .shake{animation:shake .3s;}
   .lshake{animation:lshake .1s linear;}
@@ -1545,6 +1552,14 @@
   let cell=46, tileScale="medium";
   let grid=[];                 // grid[r][c] = letter | null
   let lockedSet=new Set();     // keys "r,c" of bricks locked in place (immune to gravity)
+  const lockFlash=new Map();   // "r,c" -> ms when a brick locked/landed here; drives the molten lock flash
+  const LOCK_FLASH_MS=4500;    // how long the bright-yellow -> normal cool-down runs (window >= animation)
+  function markLockFlash(keys){          // tie the flash to the Smoke button, all modes
+    if(!smokeOn) return;
+    const t=nowMs();
+    for(const [k,v] of lockFlash) if(t-v>=LOCK_FLASH_MS) lockFlash.delete(k);   // prune stale
+    keys.forEach(k=>lockFlash.set(k,t));
+  }
   let active=null;             // {col, letter, y}
   let nextLetter="";
   let state="start";           // start | play | pause | over | menu
@@ -1954,6 +1969,7 @@
     const L=active.letter;
     grid[spot.r][spot.c]=L; totalDrops++; letterCounts[L]=(letterCounts[L]||0)+1;
     lockedSet.add(spot.r+","+spot.c);            // permanent floating brick (gravity-immune)
+    markLockFlash([spot.r+","+spot.c]);
     lastDrop={r:spot.r,c:spot.c};
     active=null;
     blip(300,0.07,"sine",0.1);
@@ -2102,6 +2118,11 @@
     t.style.top=(row*cell+inset)+"px";
     t.style.width=size+"px"; t.style.height=size+"px";
     t.style.fontSize=tileFont();
+    const fk=row+","+col, fb=lockFlash.get(fk);        // molten lock flash on freshly locked/landed cells
+    if(fb!=null){ const el=nowMs()-fb;
+      if(el<LOCK_FLASH_MS){ const hf=document.createElement("div"); hf.className="heatflash"; hf.style.animationDelay=(-el)+"ms"; t.appendChild(hf); }
+      else lockFlash.delete(fk);
+    }
     const g=document.createElement("span"); g.className="glyph"; g.textContent=ch;
     t.appendChild(g);
     return t;
@@ -2544,13 +2565,13 @@
   function lockPiece(){
     let pr=Math.max(0, Math.min(ROWS-1, Math.round(active.y/cell)));
     const cells = active.mate ? [[0,0,active.letter],[active.mate.dr,active.mate.dc,active.mate.letter]] : [[0,0,active.letter]];
-    let last=null;
+    let last=null; const flk=[];
     for(const [dr,dc,L] of cells){
       const r=pr+dr, c=active.col+dc;
       if(r<0||r>=ROWS||c<0||c>=COLS||grid[r][c]!=null) continue;
-      grid[r][c]=L; totalDrops++; letterCounts[L]=(letterCounts[L]||0)+1; last={r,c};
+      grid[r][c]=L; totalDrops++; letterCounts[L]=(letterCounts[L]||0)+1; last={r,c}; flk.push(r+","+c);
     }
-    lastDrop=last;
+    lastDrop=last; markLockFlash(flk);
     active=null;
     ghostEl.style.opacity=0; { const gr=document.getElementById("ghostRow"); if(gr) gr.style.opacity=0; }
     sLand();
@@ -2567,14 +2588,14 @@
     let pr=Math.round(active.y/cell);
     pr=Math.max(0, Math.min(land, pr));      // can't lock into/through existing tiles
     const cells = active.mate ? [[0,0,active.letter],[active.mate.dr,active.mate.dc,active.mate.letter]] : [[0,0,active.letter]];
-    let last=null;
+    let last=null; const flk=[];
     for(const [dr,dc,L] of cells){
       const r=pr+dr, c=active.col+dc;
       if(r<0||r>=ROWS||c<0||c>=COLS||grid[r][c]!=null) continue;
       grid[r][c]=L; totalDrops++; letterCounts[L]=(letterCounts[L]||0)+1;
-      lockedSet.add(r+","+c); last={r,c};
+      lockedSet.add(r+","+c); last={r,c}; flk.push(r+","+c);
     }
-    lastDrop=last;
+    lastDrop=last; markLockFlash(flk);
     active=null;
     ghostEl.style.opacity=0; { const gr=document.getElementById("ghostRow"); if(gr) gr.style.opacity=0; }
     sLand();
