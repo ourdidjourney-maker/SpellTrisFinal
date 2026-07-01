@@ -881,7 +881,7 @@
     <div class="setup">
       <div class="row"><span>Game mode</span>
         <div class="seg" id="segMode">
-          <button data-mode="classic" class="on">Classic</button><button data-mode="antigrav">Anti-Gravity</button><button data-mode="sandbox">Sandbox</button>
+          <button data-mode="classic" class="on">Classic</button><button data-mode="antigrav">Anti-Gravity</button>
         </div>
       </div>
       <div class="row"><span>Difficulty</span>
@@ -1128,15 +1128,6 @@
     <button class="cta" id="againBtn">Dive again</button>
   </div>
 </div>
-
-<svg id="lensSvg" width="0" height="0" style="position:absolute;width:0;height:0;pointer-events:none;" aria-hidden="true"><defs>
-  <filter id="fisheye" color-interpolation-filters="sRGB">
-    <feImage id="lensMap" result="lensmap" preserveAspectRatio="none"></feImage>
-    <feDisplacementMap id="lensDisp" in="SourceGraphic" in2="lensmap" scale="0" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
-  </filter>
-</defs></svg>
-<div id="lensVig" class="lens-vig"></div>
-<div id="lensCtrl" class="lens-ctrl hide"><span>&#9673; Lens</span><input type="range" id="lensAmt" min="0" max="500" step="2" value="220"><span id="lensAmtV">220</span></div>
 
 <div class="toast" id="toast"></div>
 
@@ -2580,6 +2571,7 @@
   // 🚦 The "what happens after a brick lands" director: it finds words, clears
   //    them, adds up the score, drops the smoke/sparks, then brings the next
   //    brick. Central and delicate — tweak with care (or not at all).
+  let _chainTimer=0;   // handle for the pending cascade step (so a sandbox rebuild can cancel it safely)
   function resolveBoard(isChain){
     resolving=true;
     if(!isChain) _bonusArm=0;   // a fresh drop re-arms the backwards-bonus check from scratch
@@ -2656,7 +2648,8 @@
     renderStack(found.cells);
 
     // after the pop, remove + gravity + recurse
-    setTimeout(()=>{
+    _chainTimer=setTimeout(()=>{
+      _chainTimer=0;
       found.cells.forEach(key=>{ const [rr,cc]=key.split(",").map(Number); grid[rr][cc]=null; lockedSet.delete(key); });
       applyGravity();
       renderStack();
@@ -3967,41 +3960,6 @@
     document.addEventListener('click',hide);
     window.addEventListener('scroll',hide,true);
   })();
-  // ---- Fisheye "watch mode" lens (warps the whole window; adjustable) ----
-  (function(){
-    const disp=document.getElementById('lensDisp'), mapEl=document.getElementById('lensMap');
-    if(!disp||!mapEl) return;
-    // radial displacement map: near center ~0, growing outward => barrel/fisheye bulge
-    const S=256, cv=document.createElement('canvas'); cv.width=cv.height=S;
-    const ctx=cv.getContext('2d'), img=ctx.createImageData(S,S), d=img.data;
-    const cx=(S-1)/2, cy=(S-1)/2, maxR=Math.hypot(cx,cy);
-    for(let y=0;y<S;y++)for(let x=0;x<S;x++){
-      const dx=x-cx, dy=y-cy, r=Math.hypot(dx,dy)||1e-6;
-      const nx=dx/r, ny=dy/r, prof=Math.pow(r/maxR,1.4);
-      const i=(y*S+x)*4;
-      d[i]  =Math.round(Math.max(0,Math.min(255,(0.5+0.5*nx*prof)*255)));
-      d[i+1]=Math.round(Math.max(0,Math.min(255,(0.5+0.5*ny*prof)*255)));
-      d[i+2]=128; d[i+3]=255;
-    }
-    ctx.putImageData(img,0,0);
-    const url=cv.toDataURL();
-    mapEl.setAttributeNS('http://www.w3.org/1999/xlink','href',url); mapEl.setAttribute('href',url);
-    const amt=document.getElementById('lensAmt'), amtV=document.getElementById('lensAmtV'),
-          ctrl=document.getElementById('lensCtrl'), btn=document.getElementById('bLens');
-    function apply(){ const v=amt?amt.value:220; disp.setAttribute('scale',v); if(amtV) amtV.textContent=v; }
-    // park the slider in the middle of the board — the lens barely warps at dead-center, so it stays usable
-    function centerCtrl(){ if(!ctrl) return; let X=window.innerWidth/2, Y=window.innerHeight/2;
-      const b=document.getElementById('board')||document.querySelector('.stage');
-      if(b){ const r=b.getBoundingClientRect(); if(r.width){ X=r.left+r.width/2; Y=r.top+r.height/2; } }
-      ctrl.style.left=X+'px'; ctrl.style.top=Y+'px'; ctrl.style.bottom='auto'; ctrl.style.transform='translate(-50%,-50%)'; }
-    let on=false;
-    function toggle(){ on=!on; document.body.classList.toggle('lens-on',on);
-      if(btn) btn.classList.toggle('on',on); if(ctrl) ctrl.classList.toggle('hide',!on); if(on) centerCtrl(); apply(); }
-    if(btn) btn.addEventListener('click',toggle);
-    if(amt) amt.addEventListener('input',apply);
-    window.addEventListener('resize',()=>{ if(on) centerCtrl(); });
-    apply();
-  })();
   $("demoFromStart").addEventListener("click",startDemo);
   $("bAiPlay").addEventListener("click",aiTakeover);
   { const bd=$("bonusDone"); if(bd) bd.addEventListener("click",()=>{ if(bonusActive) finishBonus(); }); }
@@ -4047,6 +4005,13 @@
   function _sbxMsg(t){ const m=$("sbxMsg"); if(m){ m.textContent=t; clearTimeout(_sbxMsg._t); _sbxMsg._t=setTimeout(()=>{ if(m) m.textContent=""; },2200); } }
   // rebuild THIS game's board at a new size (only the sandbox board — nothing shared)
   function sbxApplyBoard(){
+    // A resize mid-cascade would let a pending chain step fire against the NEW grid using the
+    // OLD out-of-bounds coords, throw, and leave resolving stuck true forever (whole sim freezes,
+    // worst under autoplay). So cancel any pending cascade + clear the flags before we rebuild.
+    if(_chainTimer){ clearTimeout(_chainTimer); _chainTimer=0; }
+    resolving=false;
+    _demoLast=null; _demoTarget=null;        // let the AI re-decide cleanly on the new board
+    _bonusArm=0; bonusActive=false;          // a rebuild wipes the board, so drop any pending bonus
     const c=Math.max(4,Math.min(12,parseInt($("sbxCols").value,10)||COLS));
     const r=Math.max(6,Math.min(22,parseInt($("sbxRows").value,10)||ROWS));
     COLS=c; ROWS=r; spawnCol=COLS>>1;
