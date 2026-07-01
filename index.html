@@ -311,17 +311,6 @@
   .tip.below.show{transform:translate(-50%,9px) scale(1);}
   .tip.below::after{bottom:auto;top:-5px;border:0;
     border-left:1px solid rgba(56,232,255,.42);border-top:1px solid rgba(56,232,255,.42);}
-  body.lens-on{filter:url(#fisheye);}
-  .lens-vig{position:fixed;inset:0;pointer-events:none;z-index:117;opacity:0;transition:opacity .35s ease;
-    background:radial-gradient(ellipse 78% 78% at center, transparent 50%, rgba(0,0,0,.28) 82%, rgba(0,0,0,.62) 100%);}
-  body.lens-on .lens-vig{opacity:1;}
-  .lens-ctrl{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:126;
-    display:flex;align-items:center;gap:10px;background:linear-gradient(180deg,rgba(20,32,58,.95),rgba(11,18,38,.95));
-    border:1px solid rgba(56,232,255,.4);padding:8px 16px;border-radius:13px;font-family:var(--display);font-size:12px;color:#dff7ff;
-    box-shadow:0 8px 22px rgba(0,0,0,.5),0 0 16px rgba(56,232,255,.22);}
-  .lens-ctrl.hide{display:none;}
-  .lens-ctrl input[type=range]{width:150px;accent-color:var(--cyan,#38e8ff);}
-  .lens-ctrl span:last-child{min-width:26px;text-align:right;font-variant-numeric:tabular-nums;}
   .bit-row em{color:#ffb0bd;font-style:normal;font-size:12px;}
   .bit-sum.run{color:#9af1ff;}
   .bit-group{margin:14px 0 4px;font-weight:700;font-size:11px;letter-spacing:1.5px;color:#9af1ff;opacity:.8;text-transform:uppercase;border-top:1px solid var(--glass-line,rgba(160,190,255,.18));padding-top:10px;}
@@ -813,7 +802,6 @@
       <button class="btn" id="bHideUI" title="Hide the interface">&#9646;&#9646;&#9646;</button>
       <button class="btn" id="bHome" title="Menu">&#9776;</button>
       <button class="btn" id="bBtnSize" title="Button size (smaller / bigger)">&#8645; M</button>
-      <button class="btn" id="bLens" title="Fisheye lens &mdash; watch mode"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></button>
       <button class="btn" id="bWords">Words</button>
       <button class="btn" id="bHow">How to play</button>
       <button class="btn" id="bMute">Sound: On</button>
@@ -886,7 +874,7 @@
     <p class="lede">Letters rain into the deep. Stack them so a run spells a real word — across or down — and it clears, just like a Tetris line.</p>
     <div class="rules">
       • Move each falling letter and drop it where you want.<br>
-      • Any <b>3+ letter word</b> reading left→right or top→bottom <b>clears instantly</b>.<br>
+      • Any <b>2+ letter word</b> reading left→right or top→bottom <b>clears instantly</b>.<br>
       • Cleared letters vanish and the stack above drops in. Chains score big.<br>
       • Junk piles up. Let a column hit the ceiling and you're done.
     </div>
