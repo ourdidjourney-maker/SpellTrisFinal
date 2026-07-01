@@ -802,6 +802,7 @@
       <button class="btn" id="bStorm">Lightning: On</button>
       <button class="btn" id="bThunder">Storm Mode: Off</button>
       <button class="btn on" id="bSmoke">Smoke: On</button>
+      <button class="btn on" id="bSpark">Static: On</button>
       <button class="btn agbtn" id="bAgRand">Emitter: Fixed</button>
       <button class="btn agbtn" id="bAgGrav">Gravity: Off</button>
       <button class="btn agbtn" id="bAgForce">Force: Med</button>
@@ -3317,6 +3318,7 @@
   //  Fires on every cleared cell — word solves AND backwards-bonus deletes.
   // ============================================================
   let smokeOn=true, heatCells=[], smoke=[];
+  let sparkOn=true;   // static-electricity arcs between nearby bricks (all modes)
   const HEAT_LIFE=2200;   // ms to cool from white-hot to gone (ease-out: fast then slow)
   // 🔥 HOT-METAL COOLDOWN COLORS — the glow left when a brick clears.
   // Each entry is {t: how-far-through-the-cooldown (0=just cleared, 1=done),
@@ -3380,6 +3382,7 @@
     }
   }
   function toggleSmoke(){ smokeOn=!smokeOn; const b=$("bSmoke"); if(b){ b.textContent="Smoke: "+(smokeOn?"On":"Off"); b.classList.toggle("on",smokeOn); } if(!smokeOn) smoke=[]; }
+  function toggleSpark(){ sparkOn=!sparkOn; const b=$("bSpark"); if(b){ b.textContent="Static: "+(sparkOn?"On":"Off"); b.classList.toggle("on",sparkOn); } }
   function toggleBonus(){ bonusEnabled=!bonusEnabled; const b=$("bBonus"); if(b){ b.textContent="Bonus: "+(bonusEnabled?"On":"Off"); b.classList.toggle("on",bonusEnabled); } }
   const _btnSizes=[["S",0.82],["M",1],["L",1.22]]; let _btnSizeIx=1;   // control-bar button scale: Small / Medium / Large
   function cycleBtnSize(){ _btnSizeIx=(_btnSizeIx+1)%_btnSizes.length; const s=_btnSizes[_btnSizeIx];
@@ -3567,14 +3570,14 @@
     const cv=$("sparkcv"); if(!cv) return;
     const ctx=cv.getContext("2d");
     ctx.clearRect(0,0,COLS*cell,ROWS*cell);
-    if(state!=="play" || !active || resolving) return;
+    if(!sparkOn || state!=="play" || !active || resolving) return;
     const centers=[];
     if(active.ag){ centers.push([active.x+cell/2, active.y+cell/2]); }
     else{
       centers.push([active.col*cell+cell/2, active.y+cell/2]);
       if(active.mate) centers.push([(active.col+active.mate.dc)*cell+cell/2, active.y+active.mate.dr*cell+cell/2]);
     }
-    const REACH=cell*5.9, NEAR=cell*0.55, F=BOLT_FOCAL;     // spark when a brick is within ~5 cells
+    const REACH=cell*4.9, NEAR=cell*0.55, F=BOLT_FOCAL;     // spark when a brick is within ~4 cells
     ctx.globalCompositeOperation="lighter";                 // additive -> arcs glow where they overlap
     ctx.lineCap="round"; ctx.lineJoin="round";
     for(const [cx,cy] of centers){
@@ -3586,7 +3589,7 @@
         const dx=bx-cx, dy=by-cy, dist=Math.hypot(dx,dy);
         if(dist<NEAR || dist>REACH) continue;
         const close=1-(dist-NEAR)/(REACH-NEAR);             // 0 far .. 1 nearly touching
-        if(Math.random() > 0.18+0.62*close) continue;       // flicker: fires more often the closer it gets
+        if(Math.random() > 0.14+0.55*close) continue;       // flicker: fires more often the closer it gets
         const start={x:0,y:0,z:0};
         const end={x:dx,y:dy,z:(Math.random()-0.5)*dist*0.9}; // random Z depth -> genuine 3D arc
         const pts=[start]; boltFractal(start,end,3,dist*0.3,pts); pts.push(end);
@@ -3998,6 +4001,7 @@
   $("bStorm").addEventListener("click",toggleStorm);
   $("bThunder").addEventListener("click",toggleThunder);
   $("bSmoke").addEventListener("click",toggleSmoke);
+  { const bs=$("bSpark"); if(bs) bs.addEventListener("click",toggleSpark); }
   $("bBonus").addEventListener("click",toggleBonus);
   $("bBtnSize").addEventListener("click",cycleBtnSize);
   $("bStorm").classList.toggle("on", stormOn);
@@ -4030,6 +4034,7 @@
       bTicTac:"Two connected bricks per piece", bDelFx:"Glow when the falling brick can be deleted",
       bSentDots:"Dot the letters used in the sentence challenge", bStorm:"Lightning + thunder on each solve",
       bThunder:"Ambient background storm", bSmoke:"Smoke rising off cleared cells",
+      bSpark:"Static electricity arcing between nearby bricks",
       bAgRand:"Emitter: fixed edge vs. random", bAgGrav:"Gravity bias for drifting bricks",
       bAgForce:"How hard bricks drift", bAgFloat:"Cleared bricks drift out & fade",
       bAgTimer:"Bricks auto-lock on a countdown",
