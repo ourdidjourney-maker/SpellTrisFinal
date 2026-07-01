@@ -311,6 +311,17 @@
   .tip.below.show{transform:translate(-50%,9px) scale(1);}
   .tip.below::after{bottom:auto;top:-5px;border:0;
     border-left:1px solid rgba(56,232,255,.42);border-top:1px solid rgba(56,232,255,.42);}
+  body.lens-on{filter:url(#fisheye);}
+  .lens-vig{position:fixed;inset:0;pointer-events:none;z-index:117;opacity:0;transition:opacity .35s ease;
+    background:radial-gradient(ellipse 78% 78% at center, transparent 50%, rgba(0,0,0,.28) 82%, rgba(0,0,0,.62) 100%);}
+  body.lens-on .lens-vig{opacity:1;}
+  .lens-ctrl{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:126;
+    display:flex;align-items:center;gap:10px;background:linear-gradient(180deg,rgba(20,32,58,.95),rgba(11,18,38,.95));
+    border:1px solid rgba(56,232,255,.4);padding:8px 16px;border-radius:13px;font-family:var(--display);font-size:12px;color:#dff7ff;
+    box-shadow:0 8px 22px rgba(0,0,0,.5),0 0 16px rgba(56,232,255,.22);}
+  .lens-ctrl.hide{display:none;}
+  .lens-ctrl input[type=range]{width:150px;accent-color:var(--cyan,#38e8ff);}
+  .lens-ctrl span:last-child{min-width:26px;text-align:right;font-variant-numeric:tabular-nums;}
   .bit-row em{color:#ffb0bd;font-style:normal;font-size:12px;}
   .bit-sum.run{color:#9af1ff;}
   .bit-group{margin:14px 0 4px;font-weight:700;font-size:11px;letter-spacing:1.5px;color:#9af1ff;opacity:.8;text-transform:uppercase;border-top:1px solid var(--glass-line,rgba(160,190,255,.18));padding-top:10px;}
@@ -802,6 +813,7 @@
       <button class="btn" id="bHideUI" title="Hide the interface">&#9646;&#9646;&#9646;</button>
       <button class="btn" id="bHome" title="Menu">&#9776;</button>
       <button class="btn" id="bBtnSize" title="Button size (smaller / bigger)">&#8645; M</button>
+      <button class="btn" id="bLens" title="Fisheye lens &mdash; watch mode"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:-2px"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg></button>
       <button class="btn" id="bWords">Words</button>
       <button class="btn" id="bHow">How to play</button>
       <button class="btn" id="bMute">Sound: On</button>
@@ -874,7 +886,7 @@
     <p class="lede">Letters rain into the deep. Stack them so a run spells a real word — across or down — and it clears, just like a Tetris line.</p>
     <div class="rules">
       • Move each falling letter and drop it where you want.<br>
-      • Any <b>2+ letter word</b> reading left→right or top→bottom <b>clears instantly</b>.<br>
+      • Any <b>3+ letter word</b> reading left→right or top→bottom <b>clears instantly</b>.<br>
       • Cleared letters vanish and the stack above drops in. Chains score big.<br>
       • Junk piles up. Let a column hit the ceiling and you're done.
     </div>
@@ -1128,6 +1140,15 @@
     <button class="cta" id="againBtn">Dive again</button>
   </div>
 </div>
+
+<svg id="lensSvg" width="0" height="0" style="position:absolute;width:0;height:0;pointer-events:none;" aria-hidden="true"><defs>
+  <filter id="fisheye" color-interpolation-filters="sRGB">
+    <feImage id="lensMap" result="lensmap" preserveAspectRatio="none"></feImage>
+    <feDisplacementMap id="lensDisp" in="SourceGraphic" in2="lensmap" scale="0" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
+  </filter>
+</defs></svg>
+<div id="lensVig" class="lens-vig"></div>
+<div id="lensCtrl" class="lens-ctrl hide"><span>&#9673; Lens</span><input type="range" id="lensAmt" min="0" max="500" step="2" value="220"><span id="lensAmtV">220</span></div>
 
 <div class="toast" id="toast"></div>
 
@@ -3787,10 +3808,19 @@
       active.col=nc; positionActive(); positionGhost(); bumpLock();
       return;
     }
-    // Blocked at the same height. If there's a pocket just below in the new column
-    // (i.e. you're pressing into the slot under an overhang), slide over AND drop into
-    // it in one motion — so you don't have to fall past the brick first.
-    const fromRow=Math.max(0,Math.floor(active.y/cell));
+    // Blocked at the same height. A falling brick straddles two rows; if EITHER of those
+    // rows is open in the new column, slide over and snap the piece to it — tuck UNDER an
+    // overhang or settle INTO a pocket, in one motion, no matter the fall timing.
+    const r0=Math.max(0,Math.floor(active.y/cell));
+    const r1=Math.max(0,Math.min(ROWS-1,Math.floor((active.y+cell-1)/cell)));
+    if(grid[r0][nc]==null){                   // upper cell open → settle into it (shelf just below)
+      active.col=nc; active.y=r0*cell; positionActive(); positionGhost(); bumpLock(); return;
+    }
+    if(grid[r1][nc]==null){                    // lower cell open → drop under the overhang
+      active.col=nc; active.y=r1*cell; positionActive(); positionGhost(); bumpLock(); return;
+    }
+    // both straddled rows blocked: reach a little deeper for a pocket a row or two below
+    const fromRow=r0;
     const land=settleRow(nc, fromRow);        // where the piece would rest in that column
     if(land>fromRow && land<=fromRow+2 && land<ROWS && grid[land][nc]==null){
       active.col=nc; active.y=land*cell; positionActive(); positionGhost(); bumpLock();
@@ -3948,6 +3978,41 @@
     document.addEventListener('focusout',hide);
     document.addEventListener('click',hide);
     window.addEventListener('scroll',hide,true);
+  })();
+  // ---- Fisheye "watch mode" lens (warps the whole window; adjustable) ----
+  (function(){
+    const disp=document.getElementById('lensDisp'), mapEl=document.getElementById('lensMap');
+    if(!disp||!mapEl) return;
+    // radial displacement map: near center ~0, growing outward => barrel/fisheye bulge
+    const S=256, cv=document.createElement('canvas'); cv.width=cv.height=S;
+    const ctx=cv.getContext('2d'), img=ctx.createImageData(S,S), d=img.data;
+    const cx=(S-1)/2, cy=(S-1)/2, maxR=Math.hypot(cx,cy);
+    for(let y=0;y<S;y++)for(let x=0;x<S;x++){
+      const dx=x-cx, dy=y-cy, r=Math.hypot(dx,dy)||1e-6;
+      const nx=dx/r, ny=dy/r, prof=Math.pow(r/maxR,1.4);
+      const i=(y*S+x)*4;
+      d[i]  =Math.round(Math.max(0,Math.min(255,(0.5+0.5*nx*prof)*255)));
+      d[i+1]=Math.round(Math.max(0,Math.min(255,(0.5+0.5*ny*prof)*255)));
+      d[i+2]=128; d[i+3]=255;
+    }
+    ctx.putImageData(img,0,0);
+    const url=cv.toDataURL();
+    mapEl.setAttributeNS('http://www.w3.org/1999/xlink','href',url); mapEl.setAttribute('href',url);
+    const amt=document.getElementById('lensAmt'), amtV=document.getElementById('lensAmtV'),
+          ctrl=document.getElementById('lensCtrl'), btn=document.getElementById('bLens');
+    function apply(){ const v=amt?amt.value:220; disp.setAttribute('scale',v); if(amtV) amtV.textContent=v; }
+    // park the slider in the middle of the board — the lens barely warps at dead-center, so it stays usable
+    function centerCtrl(){ if(!ctrl) return; let X=window.innerWidth/2, Y=window.innerHeight/2;
+      const b=document.getElementById('board')||document.querySelector('.stage');
+      if(b){ const r=b.getBoundingClientRect(); if(r.width){ X=r.left+r.width/2; Y=r.top+r.height/2; } }
+      ctrl.style.left=X+'px'; ctrl.style.top=Y+'px'; ctrl.style.bottom='auto'; ctrl.style.transform='translate(-50%,-50%)'; }
+    let on=false;
+    function toggle(){ on=!on; document.body.classList.toggle('lens-on',on);
+      if(btn) btn.classList.toggle('on',on); if(ctrl) ctrl.classList.toggle('hide',!on); if(on) centerCtrl(); apply(); }
+    if(btn) btn.addEventListener('click',toggle);
+    if(amt) amt.addEventListener('input',apply);
+    window.addEventListener('resize',()=>{ if(on) centerCtrl(); });
+    apply();
   })();
   $("demoFromStart").addEventListener("click",startDemo);
   $("bAiPlay").addEventListener("click",aiTakeover);
