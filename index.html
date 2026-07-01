@@ -201,12 +201,10 @@
   .danger.on{opacity:1;animation:dangerpulse 1s ease-in-out infinite;}
   @keyframes dangerpulse{50%{opacity:.5;}}
 
-  /* ghost column highlight */
-  .ghost{position:absolute;top:0;bottom:0;background:rgba(56,232,255,.07);
-    border-left:1px solid rgba(56,232,255,.18);border-right:1px solid rgba(56,232,255,.18);
+  /* ghost column highlight — guides removed (were reading as vertical/horizontal bands) */
+  .ghost{position:absolute;top:0;bottom:0;background:transparent;border:0;
     pointer-events:none;transition:left .08s ease;}
-  .ghostrow{position:absolute;left:0;right:0;background:rgba(56,232,255,.07);
-    border-top:1px solid rgba(56,232,255,.18);border-bottom:1px solid rgba(56,232,255,.18);
+  .ghostrow{position:absolute;left:0;right:0;background:transparent;border:0;
     pointer-events:none;transition:opacity .1s;}
 
   #stack,#active,#fx{position:absolute;inset:0;pointer-events:none;}
@@ -864,13 +862,11 @@
       <button id="sbxLoad" class="sbx-btn">Load</button>
       <button id="sbxExport" class="sbx-btn">Download</button>
       <button id="sbxImport" class="sbx-btn">Import</button>
-      <button id="sbxReset" class="sbx-btn ghost">Reset</button>
       <input type="file" id="sbxFile" accept="application/json,.json" style="display:none">
     </div>
     <div class="sbx-sep">Debug</div>
     <div class="sbx-btns">
       <button id="sbxForce" class="sbx-btn">Force play</button>
-      <button id="sbxDbgHud" class="sbx-btn ghost">Debug HUD</button>
     </div>
     <div id="sbxMsg" class="sbx-msg"></div>
   </div>
