@@ -2944,6 +2944,7 @@
         desc:"drops a hypothetical letter into the empty cells, surfaces only genuine words, points at the obvious completion, and restores the board perfectly",
         fn:()=>{
           const W=randWord(Math.max(3,MINLEN)), len=W.length;     // a real word, at least MINLEN long
+          MINLEN=Math.min(MINLEN,len);                            // never scan for words longer than the one we built
           mkBoard(5, len+2);
           const r=2, c0=1, tCol=c0+len-1;                          // lay all but the last letter in a row
           for(let k=0;k<len-1;k++) grid[r][c0+k]=W[k];             // → the empty cell at tCol completes W
@@ -2968,7 +2969,9 @@
           return (tutorHints.length===0) || "tutor produced hints while switched off";
         } }
     ];
+    const _mlSuite=MINLEN;   // baseline — several checks set MINLEN for their own board; reset before each so none leaks into the next
     const results=tests.concat(engTests).map(t=>{ let pass=false, info="";
+      MINLEN=_mlSuite;
       try{ const r=t.fn(); pass=(r===true); info=(typeof r==="string"?r:""); }
       catch(e){ pass=false; info="threw: "+String((e&&e.message)||e); }
       return { name:t.name, desc:t.desc, group:t.group, pass, info }; });
