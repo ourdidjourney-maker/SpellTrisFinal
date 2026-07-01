@@ -3590,9 +3590,13 @@
         if(dist<NEAR || dist>REACH) continue;
         const close=1-(dist-NEAR)/(REACH-NEAR);             // 0 far .. 1 nearly touching
         if(Math.random() > 0.14+0.55*close) continue;       // flicker: fires more often the closer it gets
-        const start={x:0,y:0,z:0};
-        const end={x:dx,y:dy,z:(Math.random()-0.5)*dist*0.9}; // random Z depth -> genuine 3D arc
-        const pts=[start]; boltFractal(start,end,3,dist*0.3,pts); pts.push(end);
+        const ux=dx/dist, uy=dy/dist, pxp=-uy, pyp=ux;      // direction + perpendicular
+        const edge=(cell*0.42)/Math.max(Math.abs(ux),Math.abs(uy)); // center -> square edge along the arc
+        const j1=(Math.random()-0.5)*cell*0.3, j2=(Math.random()-0.5)*cell*0.3; // wander along each edge
+        const start={x:ux*edge+pxp*j1, y:uy*edge+pyp*j1, z:0};                   // leave from the moving brick's edge
+        const end={x:dx-ux*edge+pxp*j2, y:dy-uy*edge+pyp*j2, z:(Math.random()-0.5)*dist*0.7}; // land on the neighbor's edge
+        const gap=Math.hypot(end.x-start.x, end.y-start.y);
+        const pts=[start]; boltFractal(start,end,3,gap*0.3,pts); pts.push(end);
         const polys=[pts];
         if(Math.random()<0.4){                              // occasional tiny fork
           const base=pts[1+Math.floor(Math.random()*(pts.length-2))];
