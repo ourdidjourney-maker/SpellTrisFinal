@@ -629,7 +629,14 @@
   .sbx-title{font-family:var(--display);font-weight:600;letter-spacing:.08em;font-size:13px;color:#dff7ff;}
   .sbx-x{background:rgba(255,255,255,.08);border:1px solid var(--glass-line);color:var(--ink);
     width:24px;height:24px;border-radius:7px;cursor:pointer;font-size:15px;line-height:1;}
-  .sbx-body{padding:10px 12px;display:flex;flex-direction:column;gap:8px;max-height:70vh;overflow:auto;}
+  .sbx-body{padding:10px 12px;display:flex;flex-direction:column;gap:8px;max-height:70vh;overflow:auto;
+    scrollbar-width:thin;scrollbar-color:rgba(56,232,255,.38) transparent;}
+  .sbx-body::-webkit-scrollbar{width:9px;}
+  .sbx-body::-webkit-scrollbar-track{background:transparent;}
+  .sbx-body::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(56,232,255,.5),rgba(56,232,255,.25));
+    border-radius:5px;border:2px solid transparent;background-clip:padding-box;}
+  .sbx-body::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,rgba(56,232,255,.72),rgba(56,232,255,.38));background-clip:padding-box;}
+  .sbx-body::-webkit-scrollbar-button{display:none;height:0;width:0;}
   .sbx-body.hide{display:none;}
   .sbx-row{display:flex;align-items:center;gap:8px;font-size:12px;}
   .sbx-row label{flex:0 0 84px;color:var(--ink-dim);}
@@ -1735,10 +1742,16 @@
     board.style.setProperty("--cell",cell+"px");
     board.style.width=w+"px";
     board.style.height=h+"px";
-    // flanking stat panels mirror the board's exact height
-    const bh=(h+2)+"px", sl=$("statsLeft"), sr=$("statsRight");
-    if(sl) sl.style.height=bh;
-    if(sr) sr.style.height=bh;
+    // Flanking stat panels: mirror the board's height when the board is the taller one (the tidy classic
+    // look), but never crush them below their own content when the board is short — e.g. a wide/short
+    // sandbox board. Capped at the board's vertical budget so the stage itself never overflows.
+    { const sl=$("statsLeft"), sr=$("statsRight");
+      [sl,sr].forEach(p=>{ if(!p) return;
+        p.style.height="auto";                 // measure natural content height
+        const need=p.scrollHeight||0;
+        p.style.height=Math.min(maxBoardH, Math.max(h+2, need))+"px";
+      });
+    }
     fx.width=w*devicePixelRatio; fx.height=h*devicePixelRatio;
     fx.style.width=w+"px"; fx.style.height=h+"px";
     fx.getContext("2d").setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
