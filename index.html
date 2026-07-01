@@ -508,9 +508,9 @@
     border:1px solid var(--glass-line);
     box-shadow:inset 0 0 40px rgba(56,232,255,.04),inset 0 2px 0 rgba(255,255,255,.04),
       0 18px 44px rgba(0,0,0,.5);
-    scrollbar-width:thin;scrollbar-color:rgba(120,160,255,.3) transparent;}
-  .statpanel::-webkit-scrollbar{width:6px;}
-  .statpanel::-webkit-scrollbar-thumb{background:rgba(120,160,255,.25);border-radius:3px;}
+    scrollbar-width:none;-ms-overflow-style:none;}
+  .statpanel::-webkit-scrollbar{width:0;height:0;display:none;}
+  .statpanel::-webkit-scrollbar-thumb{background:transparent;}
   .sp-h{font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--cyan);
     opacity:.85;margin:9px 0 4px;padding-bottom:4px;border-bottom:1px solid rgba(120,160,255,.14);}
   .sp-h:first-child{margin-top:0;}
@@ -629,14 +629,10 @@
   .sbx-title{font-family:var(--display);font-weight:600;letter-spacing:.08em;font-size:13px;color:#dff7ff;}
   .sbx-x{background:rgba(255,255,255,.08);border:1px solid var(--glass-line);color:var(--ink);
     width:24px;height:24px;border-radius:7px;cursor:pointer;font-size:15px;line-height:1;}
-  .sbx-body{padding:10px 12px;display:flex;flex-direction:column;gap:8px;max-height:70vh;overflow:auto;
-    scrollbar-width:thin;scrollbar-color:rgba(56,232,255,.38) transparent;}
-  .sbx-body::-webkit-scrollbar{width:9px;}
-  .sbx-body::-webkit-scrollbar-track{background:transparent;}
-  .sbx-body::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(56,232,255,.5),rgba(56,232,255,.25));
-    border-radius:5px;border:2px solid transparent;background-clip:padding-box;}
-  .sbx-body::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,rgba(56,232,255,.72),rgba(56,232,255,.38));background-clip:padding-box;}
-  .sbx-body::-webkit-scrollbar-button{display:none;height:0;width:0;}
+  .sbx-body{padding:10px 12px;display:flex;flex-direction:column;gap:8px;max-height:70vh;overflow-y:auto;overflow-x:hidden;
+    scrollbar-width:none;-ms-overflow-style:none;}
+  .sbx-body::-webkit-scrollbar{width:0;height:0;display:none;}
+  .sbx-body::-webkit-scrollbar-thumb{background:transparent;}
   .sbx-body.hide{display:none;}
   .sbx-row{display:flex;align-items:center;gap:8px;font-size:12px;}
   .sbx-row label{flex:0 0 84px;color:var(--ink-dim);}
