@@ -493,7 +493,7 @@
   .gd-grid .c.w{background:linear-gradient(180deg,#7fffc0,#34d88a);}
   .gd-grid .c.o{background:linear-gradient(180deg,#ffc78c,#e08a4a);color:#2a1206;}
   .gd-grid .c.dr{background:transparent;border:2px solid rgba(255,66,66,.9);}
-  .gd-grid .c.dg{background:repeating-linear-gradient(45deg,rgba(72,255,140,.5) 0 3px,transparent 3px 9px);border:2px solid rgba(255,66,66,.55);}
+  .gd-grid .c.dg{background:radial-gradient(circle at 50% 50%,rgba(72,255,140,.95) 0 26%,transparent 28%);border:2px solid rgba(255,66,66,.55);}
   .gd-cap{font-size:11.5px;color:var(--ink-dim);line-height:1.4;}
   .gd-tt{grid-auto-flow:column;}
   .wm{text-align:left;}
@@ -928,7 +928,7 @@
     <p class="lede">Letters rain into the deep. Stack them so a run spells a real word — across or down — and it clears, just like a Tetris line.</p>
     <div class="rules">
       • Move each falling letter and drop it where you want.<br>
-      • Any <b>3+ letter word</b> reading left→right or top→bottom <b>clears instantly</b>.<br>
+      • Any <b>2+ letter word</b> reading left→right or top→bottom <b>clears instantly</b>.<br>
       • Cleared letters vanish and the stack above drops in. Chains score big.<br>
       • Junk piles up. Let a column hit the ceiling and you're done.
     </div>
@@ -970,6 +970,7 @@
     </div>
     <div class="btnrow">
       <button class="cta" id="startBtn">Dive in</button>
+      <button class="cta ghostbtn" id="resetGameBtn" title="Reload with fresh default settings">&#8635; Reset game</button>
       <button class="cta ghostbtn" id="howFromStart">How to play</button>
       <button class="cta ghostbtn" id="wordsFromStart">Manage words</button>
       <button class="cta ghostbtn" id="bitFromStart" title="Built-In Test: self-check the debug monitor &amp; black-box recorder">BIT</button>
@@ -4200,6 +4201,7 @@
   $("howFromStart").addEventListener("click",openHow);
   $("howDone").addEventListener("click",closeHow);
   $("startBtn").addEventListener("click",startGame);
+  { const rg=$("resetGameBtn"); if(rg) rg.addEventListener("click",()=>location.reload()); }
   $("againBtn").addEventListener("click",startGame);
   $("wordsFromStart").addEventListener("click",openWords);
   $("bitFromStart").addEventListener("click",runBIT);
@@ -4496,8 +4498,7 @@
     .rew-btns button:hover{transform:translateY(-2px);background:rgba(56,232,255,.2);}
     #designStencil{position:absolute;inset:0;pointer-events:none;z-index:4;filter:drop-shadow(0 0 4px rgba(255,40,40,.6));}
     #designFill{position:absolute;inset:0;pointer-events:none;}
-    .dfill{position:absolute;overflow:hidden;border-radius:4px;
-      background:repeating-linear-gradient(45deg,rgba(72,255,140,.5) 0 3px,transparent 3px 9px);}
+    .dfill{position:absolute;background:radial-gradient(circle at 50% 50%,rgba(72,255,140,.95) 0 20%,transparent 22%);}
     .dstencil{position:absolute;box-sizing:border-box;}
     #designHUD{position:fixed;left:14px;top:120px;z-index:19;background:linear-gradient(180deg,rgba(14,10,26,.95),rgba(8,5,18,.95));
       border:1px solid rgba(255,80,80,.4);border-radius:12px;padding:10px 12px;font-family:var(--display);color:#ffd7d7;box-shadow:0 8px 22px rgba(0,0,0,.5);display:none;}
@@ -4603,7 +4604,7 @@
     let fillEl=null;
     function renderFill(){ const stk=document.getElementById("stack");   // sits INSIDE #board, BEFORE #stack -> behind the bricks
       if(!fillEl && boardEl){ fillEl=document.createElement("div"); fillEl.id="designFill"; if(stk) boardEl.insertBefore(fillEl,stk); else boardEl.appendChild(fillEl); }
-      if(!fillEl) return; fillEl.innerHTML=""; if(dsnView>=1 || !(activeDesign&&classicW7()&&(state==="play"||state==="pause"))) return;
+      if(!fillEl) return; fillEl.innerHTML=""; if(dsnView===1||dsnView===3 || !(activeDesign&&classicW7()&&(state==="play"||state==="pause"))) return;
       solved.forEach(k=>{ const a=k.split(",").map(Number), r=a[0], c=a[1]; if(c>=COLS||(grid&&r>=grid.length)) return;
         const d=document.createElement("div"); d.className="dfill"; d.style.left=(c*cell)+"px"; d.style.top=(r*cell)+"px"; d.style.width=cell+"px"; d.style.height=cell+"px"; fillEl.appendChild(d); }); }
     setInterval(()=>{ renderStencil(); renderFill(); renderHUD();
@@ -4616,7 +4617,7 @@
     let dsnView=0;   // 0=both, 1=hide green fill, 2=hide green fill + red outline
     const openBtn=document.createElement("button"); openBtn.className="btn"; openBtn.id="bDesign"; openBtn.textContent="Design"; openBtn.dataset.tip="Open the Design Studio \u2014 paint a shape to solve in-game (Main game only)";
     const viewBtn=document.createElement("button"); viewBtn.className="btn"; viewBtn.id="bDesignView"; viewBtn.textContent="Overlay: Full"; viewBtn.dataset.tip="Cycle the on-board design overlay: full \u2192 outline only \u2192 off";
-    viewBtn.addEventListener("click",()=>{ dsnView=(dsnView+1)%3; viewBtn.textContent="Overlay: "+(dsnView===0?"Full":dsnView===1?"Outline":"Off"); viewBtn.classList.toggle("on",dsnView>0); renderFill(); renderStencil(); });
+    viewBtn.addEventListener("click",()=>{ dsnView=(dsnView+1)%4; viewBtn.textContent="Overlay: "+["Full","Outline","Dots","Off"][dsnView]; viewBtn.classList.toggle("on",dsnView>0); renderFill(); renderStencil(); });
     const anchor=document.getElementById("bHoles"); if(anchor&&anchor.parentNode) anchor.parentNode.insertBefore(openBtn, anchor.nextSibling); else document.body.appendChild(openBtn);
     if(openBtn.parentNode) openBtn.parentNode.insertBefore(viewBtn, openBtn.nextSibling); else document.body.appendChild(viewBtn);
     openBtn.addEventListener("click",()=>{ buildGrid(); renderList(); ov.classList.remove("hide"); });
