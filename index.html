@@ -263,6 +263,44 @@
   }
   .tile.locked::after{content:"";position:absolute;left:13%;top:8%;width:44%;height:24%;border-radius:50%;
     background:rgba(255,255,255,.35);filter:blur(2.5px);pointer-events:none;}
+  /* immovable obstacle blocks: muted graphite, clearly not a letter tile */
+  .tile.obstacle{background:linear-gradient(180deg,rgba(74,82,99,.96),rgba(44,50,64,.97));
+    border:1px solid rgba(120,132,158,.4);
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.06),inset 0 0 14px rgba(0,0,0,.5),0 3px 8px rgba(0,0,0,.45);}
+  .tile.obstacle::after{content:"";position:absolute;inset:5px;border-radius:5px;
+    background:repeating-linear-gradient(45deg,rgba(150,164,190,.10) 0 3px,transparent 3px 7px);}
+  /* block arrival: flares SUPER yellow, cools yellow -> orange, then fades to reveal the grey block */
+  .tile.obstacle .blockflash{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:2;
+    animation:blockCool 2.8s cubic-bezier(.22,.61,.36,1) forwards;}
+  .tile.blackhole .blockflash{position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:2;
+    animation:blockCool 2.8s cubic-bezier(.22,.61,.36,1) forwards;}
+  @keyframes blockCool{
+    0%{opacity:1;background:linear-gradient(180deg,rgba(255,252,225,1),rgba(255,232,120,1));
+      box-shadow:inset 0 0 10px rgba(255,255,245,.9),0 0 26px rgba(255,232,140,.95);}
+    45%{opacity:.92;background:linear-gradient(180deg,rgba(255,222,104,1),rgba(255,150,50,1));
+      box-shadow:0 0 16px rgba(255,150,60,.6);}
+    100%{opacity:0;background:linear-gradient(180deg,rgba(255,150,50,1),rgba(200,92,32,1));box-shadow:none;}
+  }
+  /* black-hole block: dark well with a faint accretion ring, slowly swirling */
+  /* black-hole block: a flat, empty black box (no swirl) */
+  .tile.blackhole{background:#050509;
+    border:1px solid rgba(122,122,142,.42);
+    box-shadow:inset 0 0 12px rgba(0,0,0,1),0 2px 6px rgba(0,0,0,.5);}
+  /* devour: the doomed brick red-shifts hard (blue -> orange -> red), shrinks, and spirals into the box */
+  .bhsuck{position:absolute;border-radius:9px;pointer-events:none;z-index:20;
+    display:flex;align-items:center;justify-content:center;
+    border:1px solid rgba(255,255,255,.15);
+    background:linear-gradient(180deg,rgba(120,136,186,.95),rgba(64,72,112,.96));
+    animation:bhSuck .95s cubic-bezier(.55,.02,.95,.32) forwards;}
+  .bhsuck .glyph{color:#f2f6ff;font-weight:800;line-height:1;}
+  @keyframes bhSuck{
+    0%{transform:translate(0,0) scale(1) rotate(0deg);opacity:1;
+      background:linear-gradient(180deg,rgba(120,136,186,.95),rgba(64,72,112,.96));box-shadow:0 0 0 rgba(0,0,0,0);}
+    30%{background:linear-gradient(180deg,rgba(255,182,92,1),rgba(230,120,40,1));box-shadow:0 0 14px rgba(255,150,60,.7);}
+    60%{background:linear-gradient(180deg,rgba(255,82,54,1),rgba(210,26,18,1));box-shadow:0 0 20px rgba(255,50,34,.85);}
+    100%{transform:translate(var(--bhdx,0),var(--bhdy,0)) scale(.04) rotate(340deg);opacity:0;
+      background:linear-gradient(180deg,rgba(220,20,14,1),rgba(90,4,4,1));box-shadow:0 0 26px rgba(255,30,20,.7);}
+  }
   @keyframes lockedPulse{
     0%,100%{box-shadow:inset 0 1px 0 rgba(255,255,255,.28), 0 0 11px rgba(255,150,100,.32), 0 3px 8px rgba(0,0,0,.4);}
     50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.32), 0 0 24px rgba(255,176,110,.62), 0 3px 8px rgba(0,0,0,.4);}
@@ -803,6 +841,8 @@
       <button class="btn" id="bThunder">Storm Mode: Off</button>
       <button class="btn on" id="bSmoke">Smoke: On</button>
       <button class="btn on" id="bSpark">Static: On</button>
+      <button class="btn" id="bBlocks">Blocks</button>
+      <button class="btn" id="bHoles">Black Holes</button>
       <button class="btn agbtn" id="bAgRand">Emitter: Fixed</button>
       <button class="btn agbtn" id="bAgGrav">Gravity: Off</button>
       <button class="btn agbtn" id="bAgForce">Force: Med</button>
@@ -1060,6 +1100,8 @@
         <li><b>Lightning</b> &mdash; toggle the 3-D lightning, flicker, thunder and camera kick on each solve.</li>
         <li><b>Storm Mode</b> &mdash; ambient thunderstorm; random strikes roll through between solves.</li>
         <li><b>Smoke</b> &mdash; toggle the wispy smoke that rises off cleared cells (the orange cooling glow stays either way).</li>
+        <li><b>Blocks</b> &mdash; scatter immovable grey obstacle blocks (a random 5&ndash;30% of the board) that bricks collide with and stack on. They flare yellow on arrival and cool to grey. Press again for a fresh random layout.</li>
+        <li><b>Black Holes</b> &mdash; a three-tap cycle. <b>Tap once:</b> dark black-hole blocks appear (up to 20% of the board) and any brick that touches one is devoured &mdash; it red-shifts, shrinks, and spirals in. <b>Tap again:</b> their pull widens to <b>1 cell</b>, so bricks falling nearby gravitate straight into them mid-drop. <b>Tap a third time:</b> the holes vanish and the effect switches off.</li>
         <li><b>&#9654;AI Play</b> &mdash; hand your live game to the AI; press <b>Take Over</b> on the badge to take it back. See "Watch the AI play" below.</li>
         <li><b>Words</b> — open the dictionary to add, import, or export your own word lists (saved on your device).</li>
         <li><b>Sound</b> — toggle audio.</li>
@@ -1555,6 +1597,30 @@
   let cell=46, tileScale="medium";
   let grid=[];                 // grid[r][c] = letter | null
   let lockedSet=new Set();     // keys "r,c" of bricks locked in place (immune to gravity)
+  const OBSTACLE="#";          // grid sentinel for immovable obstacle blocks: collides like a brick, never forms a word (dict is A-Z)
+  const blockFlash=new Map();  // "r,c" -> ms an obstacle block arrived; drives its yellow->orange->grey cool-down
+  const BLOCK_FLASH_MS=2900;   // how long a freshly-spawned block glows before settling to grey
+  const BLACKHOLE="@";         // grid sentinel for black-hole blocks: a brick that lands on one is devoured
+  function landsOnBlackHole(r,c){ return r>=0&&r<ROWS&&c>=0&&c<COLS&&grid[r][c]===BLACKHOLE; }
+  let bhPower=0;               // black-hole strength: each press of the button raises the pull range
+  function nearestHole(r,c,reach){ let best=null,bd=1e9;   // closest black hole within `reach` cells of (r,c)
+    for(let rr=Math.max(0,r-reach);rr<=Math.min(ROWS-1,r+reach);rr++)
+      for(let cc=Math.max(0,c-reach);cc<=Math.min(COLS-1,c+reach);cc++){
+        if(grid[rr][cc]===BLACKHOLE){ const d=Math.max(Math.abs(rr-r),Math.abs(cc-c)); if(d<=reach&&d<bd){ bd=d; best={r:rr,c:cc}; } } }
+    return best; }
+  function bhTarget(pr,col){          // where a brick landing at (pr,col) gets devoured, or null
+    if(bhPower<1) return null;
+    if(landsOnBlackHole(pr,col)) return {r:pr,c:col};       // overlapping a hole (rounding safety)
+    if(landsOnBlackHole(pr+1,col)) return {r:pr+1,c:col};   // resting directly on a hole = contact
+    if(bhPower>=2) return nearestHole(pr,col,1);            // clicked twice -> pull from up to 1 cell away
+    return null; }
+  function clearBlackHoles(){ for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ if(grid[r][c]===BLACKHOLE){ grid[r][c]=null; lockedSet.delete(r+","+c); } } }
+  function bhDevour(pr,t){            // fire the redshift collapse for the current active piece toward hole t
+    const ins=tileInset();
+    const pcells = active.mate ? [[0,0,active.letter],[active.mate.dr,active.mate.dc,active.mate.letter]] : [[0,0,active.letter]];
+    for(const [dr,dc,L] of pcells) bhSuckFx((active.col+dc)*cell+ins,(pr+dr)*cell+ins,L,t.c*cell+cell/2,t.r*cell+cell/2);
+    active=null; ghostEl.style.opacity=0; { const gr=document.getElementById("ghostRow"); if(gr) gr.style.opacity=0; }
+    try{ logEvent("blackhole","devoured"); }catch(_){} spawn(); }
   const lockFlash=new Map();   // "r,c" -> ms when a brick locked/landed here; drives the molten lock flash
   const LOCK_FLASH_MS=4500;    // how long the bright-yellow -> normal cool-down runs (window >= animation)
   function markLockFlash(keys){          // tie the flash to the Smoke button, all modes
@@ -1967,6 +2033,12 @@
     if(state!=="play"||!active||!active.ag||resolving) return;
     const tc=Math.max(0,Math.min(COLS-1,Math.floor((active.x+cell/2)/cell)));
     const tr=Math.max(0,Math.min(ROWS-1,Math.floor((active.y+cell/2)/cell)));
+    { let t=landsOnBlackHole(tr,tc)?{r:tr,c:tc}:(bhPower>=2?nearestHole(tr,tc,1):null);
+      if(t){ const ins=tileInset();
+        bhSuckFx(active.x+ins, active.y+ins, active.letter, t.c*cell+cell/2, t.r*cell+cell/2);
+        active=null; try{ logEvent("blackhole","devoured"); }catch(_){} spawn(); return;
+      }
+    }
     const spot=nearestEmpty(tr,tc);
     if(!spot){ gameOver("The board flooded with letters."); return; }
     const L=active.letter;
@@ -2126,6 +2198,11 @@
       if(el<LOCK_FLASH_MS){ const hf=document.createElement("div"); hf.className="heatflash"; hf.style.animationDelay=(-el)+"ms"; t.appendChild(hf); }
       else lockFlash.delete(fk);
     }
+    const bfb=blockFlash.get(fk);                      // arrival glow on freshly-spawned obstacle blocks
+    if(bfb!=null){ const el=nowMs()-bfb;
+      if(el<BLOCK_FLASH_MS){ const hf=document.createElement("div"); hf.className="blockflash"; hf.style.animationDelay=(-el)+"ms"; t.appendChild(hf); }
+      else blockFlash.delete(fk);
+    }
     const g=document.createElement("span"); g.className="glyph"; g.textContent=ch;
     t.appendChild(g);
     return t;
@@ -2137,6 +2214,8 @@
       for(let c=0;c<COLS;c++){
         const ch=grid[r][c];
         if(ch==null) continue;
+        if(ch===OBSTACLE){ stackEl.appendChild(makeTile("obstacle","",c,r)); continue; }   // immovable block
+        if(ch===BLACKHOLE){ stackEl.appendChild(makeTile("blackhole","",c,r)); continue; } // devours bricks
         const key=r+","+c;
         const clearing = clearingSet && clearingSet.has(key);
         if(clearing) continue;   // cleared brick flies off as spinning debris instead of popping in place
@@ -2567,6 +2646,7 @@
   // ============================================================
   function lockPiece(){
     let pr=Math.max(0, Math.min(ROWS-1, Math.round(active.y/cell)));
+    { const t=bhTarget(pr, active.col); if(t){ bhDevour(pr,t); return; } }   // black hole eats it
     const cells = active.mate ? [[0,0,active.letter],[active.mate.dr,active.mate.dc,active.mate.letter]] : [[0,0,active.letter]];
     let last=null; const flk=[];
     for(const [dr,dc,L] of cells){
@@ -2590,6 +2670,7 @@
     if(land<0) return;                       // column already full to the top
     let pr=Math.round(active.y/cell);
     pr=Math.max(0, Math.min(land, pr));      // can't lock into/through existing tiles
+    { const t=bhTarget(pr, active.col); if(t){ bhDevour(pr,t); return; } }   // black hole eats it
     const cells = active.mate ? [[0,0,active.letter],[active.mate.dr,active.mate.dc,active.mate.letter]] : [[0,0,active.letter]];
     let last=null; const flk=[];
     for(const [dr,dc,L] of cells){
@@ -2996,6 +3077,40 @@
           if(!tutorHints.some(h=>h.drop.r===r && h.drop.c===tCol)) return "tutor missed an obvious completion";
           tutorOn=false; computeTutorHints();                       // guard: switched off → nothing highlighted
           return (tutorHints.length===0) || "tutor produced hints while switched off";
+        } },
+      { name:"obstacles block words, never clear, never move", group:"OBSTACLES  \u00b7  seed "+bitSeed,
+        desc:"an obstacle blocks a word that would run through it, is never cleared itself, and survives gravity",
+        fn:()=>{
+          MINLEN=3; const W=randWord(3), len=W.length;
+          mkBoard(6, len+4); const r=3, c0=1;
+          for(let k=0;k<len;k++) grid[r][c0+k]=W[k];
+          grid[r][c0+len]=OBSTACLE; lockedSet.add(r+","+(c0+len));
+          const cc=collectClears();
+          if(!cc.words.includes(W)) return "obstacle blocked an adjacent valid word";
+          if(cc.cells.has(r+","+(c0+len))) return "obstacle was cleared as part of a word";
+          applyGravity();
+          if(grid[r][c0+len]!==OBSTACLE) return "obstacle moved or vanished under gravity";
+          return true;
+        } },
+      { name:"black holes devour, never clear, never move", group:"BLACK HOLES  \u00b7  seed "+bitSeed,
+        desc:"a black hole is recognised as a devour cell (letters and obstacles are not), never joins a word, and survives gravity",
+        fn:()=>{
+          MINLEN=3; const W=randWord(3), len=W.length;
+          mkBoard(7, len+4); const r=4, c0=1;
+          for(let k=0;k<len;k++) grid[r][c0+k]=W[k];
+          grid[r][c0+len]=BLACKHOLE; lockedSet.add(r+","+(c0+len));
+          grid[r-1][c0]=OBSTACLE;    lockedSet.add((r-1)+","+c0);
+          const cc=collectClears();
+          if(!cc.words.includes(W)) return "black hole blocked an adjacent valid word";
+          if(cc.cells.has(r+","+(c0+len))) return "black hole was cleared as part of a word";
+          if(!landsOnBlackHole(r, c0+len)) return "black hole not recognised as a devour cell";
+          if(landsOnBlackHole(r-1, c0))    return "an obstacle was wrongly treated as a black hole";
+          if(landsOnBlackHole(r, c0))      return "a letter was wrongly treated as a black hole";
+          if(!nearestHole(r, c0+len-1, 1)) return "pull range missed a hole one cell away";
+          if(nearestHole(0, 0, 1))         return "pull range grabbed a hole that is out of range";
+          applyGravity();
+          if(grid[r][c0+len]!==BLACKHOLE) return "black hole moved or vanished under gravity";
+          return true;
         } }
     ];
     const _mlSuite=MINLEN;   // baseline — several checks set MINLEN for their own board; reset before each so none leaks into the next
@@ -3195,7 +3310,9 @@
 
     // ---- BOARD ----
     row("hd","\u25A6 BOARD");
+    let _obs=0,_holes=0; for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ const v=grid[r][c]; if(v===OBSTACLE)_obs++; else if(v===BLACKHOLE)_holes++; }
     row(dangerPct>=75?"warn":"", "fill "+fillPct+"% · danger "+dangerPct+"% · tallest "+tallest+" · empty "+(total-filled)+" · locked "+lockedSet.size);
+    row("dim", "obstacles "+_obs+" · black holes "+_holes+" · pull "+(bhPower===0?"off":bhPower===1?"contact":"1-cell"));
     row("", COLS+"\u00d7"+ROWS+" · minlen "+MINLEN+" · dict "+DICT.size+" · bag "+activeBag.length+" letters"+(excluded.size?(" · excluded "+[...excluded].join("")):""));
 
     // ---- RESTRICTED ----
@@ -3383,6 +3500,51 @@
   }
   function toggleSmoke(){ smokeOn=!smokeOn; const b=$("bSmoke"); if(b){ b.textContent="Smoke: "+(smokeOn?"On":"Off"); b.classList.toggle("on",smokeOn); } if(!smokeOn) smoke=[]; }
   function toggleSpark(){ sparkOn=!sparkOn; const b=$("bSpark"); if(b){ b.textContent="Static: "+(sparkOn?"On":"Off"); b.classList.toggle("on",sparkOn); } }
+  // Bolt-on: scatter grid-sentinel blocks (obstacles / black holes) into empty cells. They live in the
+  // grid as sentinels, so existing collision/gravity/word-detection handle them with no core changes.
+  function scatterBlocks(sentinel, label, maxPct){
+    if(state!=="play") return;
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){          // clear previous blocks of THIS kind (grid is truth)
+      if(grid[r][c]===sentinel){ grid[r][c]=null; lockedSet.delete(r+","+c); }
+    }
+    const busy=new Set();                                     // don't bury the piece the player is holding
+    if(active){
+      if(active.ag){ busy.add(Math.floor(active.y/cell)+","+Math.floor(active.x/cell)); }
+      else{ const ar=Math.floor(active.y/cell); busy.add(ar+","+active.col);
+        if(active.mate) busy.add((ar+active.mate.dr)+","+(active.col+active.mate.dc)); }
+    }
+    const top=Math.max(2,Math.floor(ROWS*0.3)), cand=[];      // lower ~70%, keep the spawn area clear
+    for(let r=top;r<ROWS;r++) for(let c=0;c<COLS;c++){
+      const k=r+","+c; if(grid[r][c]==null && !busy.has(k)) cand.push([r,c]);
+    }
+    for(let i=cand.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=cand[i]; cand[i]=cand[j]; cand[j]=t; }
+    const hi=maxPct||0.30; const pct=0.05+Math.random()*Math.max(0,hi-0.05);   // 5% .. maxPct of the board
+    const n=Math.min(cand.length, Math.round(ROWS*COLS*pct));
+    for(let i=0;i<n;i++){ const [r,c]=cand[i]; grid[r][c]=sentinel; lockedSet.add(r+","+c); blockFlash.set(r+","+c, nowMs()); }
+    renderStack();
+    try{ logEvent(label, n+" blocks"); }catch(_){}
+  }
+  function spawnObstacles(){ scatterBlocks(OBSTACLE, "obstacles"); }
+  function spawnBlackHoles(){                     // cycle: off -> contact -> 1-cell pull -> off
+    bhPower=(bhPower+1)%3;
+    if(bhPower===1) scatterBlocks(BLACKHOLE,"blackholes",0.20);   // 1st click: holes appear (max 20%)
+    else if(bhPower===0){ clearBlackHoles(); renderStack(); } // 3rd click: holes vanish, off
+    // bhPower===2 (2nd click): keep the same holes, just switch on the 1-cell pull
+    const b=$("bHoles"); if(b){ b.textContent = bhPower===0?"Black Holes":("Black Holes \u00d7"+bhPower); b.classList.toggle("on", bhPower>0); }
+    try{ toast(bhPower===0?"Black holes off":(bhPower===1?"Black holes on \u2014 run into them":"Black holes \u2014 pull from 1 cell")); }catch(_){}
+  }
+  // A brick that comes to rest on a black hole is devoured: a shrinking, red-shifting collapse toward the hole.
+  function bhSuckFx(px,py,L,hx,hy){
+    const ins=tileInset(), size=cell-ins*2;
+    const el=document.createElement("div");
+    el.className="bhsuck";
+    el.style.left=px+"px"; el.style.top=py+"px"; el.style.width=size+"px"; el.style.height=size+"px"; el.style.fontSize=tileFont();
+    el.innerHTML='<span class="glyph">'+(L||"")+'</span>';
+    el.style.setProperty("--bhdx",(hx-(px+size/2))+"px");
+    el.style.setProperty("--bhdy",(hy-(py+size/2))+"px");
+    board.appendChild(el);
+    setTimeout(()=>{ if(el.parentNode) el.remove(); }, 820);
+  }
   function toggleBonus(){ bonusEnabled=!bonusEnabled; const b=$("bBonus"); if(b){ b.textContent="Bonus: "+(bonusEnabled?"On":"Off"); b.classList.toggle("on",bonusEnabled); } }
   const _btnSizes=[["S",0.82],["M",1],["L",1.22]]; let _btnSizeIx=1;   // control-bar button scale: Small / Medium / Large
   function cycleBtnSize(){ _btnSizeIx=(_btnSizeIx+1)%_btnSizes.length; const s=_btnSizes[_btnSizeIx];
@@ -3857,12 +4019,16 @@
       drawDepth(dt); drawFx(dt); drawHeat(now); drawSmoke(dt); stepDebris(dt); drawBolts(now); drawSparks(now); drawTutor(now); updateMonitor(now); updateStats(now); updateAgClock(now);
       if(thunderstormOn && state==="play" && now>=_nextStormT){ ambientStrike(); _nextStormT=now+1400+Math.random()*2600; } // ambient thunderstorm
       if(state!=="play"||!active||resolving) return;
-      if(active.ag){ agStep(dt); if(AG_TIMER[agTimerIdx]>0 && agPieceDeadline && now>=agPieceDeadline){ agPlace(); return; } positionActive(); updateAgClock(now); return; }
+      if(active.ag){ agStep(dt);
+        if(bhPower>0){ const cr=Math.floor((active.y+cell/2)/cell), cc=Math.floor((active.x+cell/2)/cell); const t=nearestHole(cr,cc,1);
+          if(t){ const ins=tileInset(); bhSuckFx(active.x+ins,active.y+ins,active.letter,t.c*cell+cell/2,t.r*cell+cell/2); active=null; try{logEvent("blackhole","devoured");}catch(_){} spawn(); return; } }
+        if(AG_TIMER[agTimerIdx]>0 && agPieceDeadline && now>=agPieceDeadline){ agPlace(); return; } positionActive(); updateAgClock(now); return; }
       if(AG_TIMER[mainTimerIdx]>0 && mainPieceDeadline && now>=mainPieceDeadline){ lockActive(); return; }  // MAIN auto-lock timer expired → lock in place
       const speed=cps*cell*(softDrop?10:(slowFall?0.3:1));
       const landTop=landingRow()*cell;
       active.y = Math.min(active.y + speed*dt/1000, landTop);
       positionActive();
+      if(bhPower>0){ const cr=Math.round(active.y/cell); const t=nearestHole(cr, active.col, 1); if(t){ bhDevour(cr,t); return; } }  // black-hole gravity (1 cell) grabs the falling brick
       if(active.y>=landTop){
         active.y=landTop;
         if(now - lastMoveT >= MOVE_GRACE) lockPiece();
@@ -4006,6 +4172,8 @@
   $("bThunder").addEventListener("click",toggleThunder);
   $("bSmoke").addEventListener("click",toggleSmoke);
   { const bs=$("bSpark"); if(bs) bs.addEventListener("click",toggleSpark); }
+  { const bb=$("bBlocks"); if(bb) bb.addEventListener("click",spawnObstacles); }
+  { const bh=$("bHoles"); if(bh) bh.addEventListener("click",spawnBlackHoles); }
   $("bBonus").addEventListener("click",toggleBonus);
   $("bBtnSize").addEventListener("click",cycleBtnSize);
   $("bStorm").classList.toggle("on", stormOn);
@@ -4039,6 +4207,8 @@
       bSentDots:"Dot the letters used in the sentence challenge", bStorm:"Lightning + thunder on each solve",
       bThunder:"Ambient background storm", bSmoke:"Smoke rising off cleared cells",
       bSpark:"Static electricity arcing between nearby bricks",
+      bBlocks:"Scatter immovable obstacle blocks (5\u201330% of the board) \u2014 press again to reroll",
+      bHoles:"Scatter black-hole blocks (5\u201330%) \u2014 any brick that lands on one is devoured",
       bAgRand:"Emitter: fixed edge vs. random", bAgGrav:"Gravity bias for drifting bricks",
       bAgForce:"How hard bricks drift", bAgFloat:"Cleared bricks drift out & fade",
       bAgTimer:"Bricks auto-lock on a countdown",
@@ -4123,6 +4293,8 @@
       "active="+(active?("yes col"+active.col+(active.mate?"+mate":"")+(active.ag?" ag":"")):"NULL")+
         "   demo="+demoOn+"   bonus="+bonusActive+"\n"+
       "board="+COLS+"x"+ROWS+"   spawnCol="+spawnCol+"   autolock="+dl+"\n";
+    { let _obs=0,_holes=0; for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ const v=grid[r][c]; if(v===OBSTACLE)_obs++; else if(v===BLACKHOLE)_holes++; }
+      s+="obstacles="+_obs+"   holes="+_holes+"   bhPull="+(bhPower===0?"off":bhPower===1?"contact":"1cell")+"\n"; }
     if(e){ s+="\u26a0 LAST ERROR ["+e.kind+"] +"+e.t+"ms\n"+e.msg+"\n"+((e.stack||"").split("\n")[0]||""); }
     else { s+="\u2713 no errors captured"; }
     el.textContent=s;
