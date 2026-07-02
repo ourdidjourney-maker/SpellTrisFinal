@@ -201,11 +201,9 @@
   .danger.on{opacity:1;animation:dangerpulse 1s ease-in-out infinite;}
   @keyframes dangerpulse{50%{opacity:.5;}}
 
-  /* ghost column highlight — guides removed (were reading as vertical/horizontal bands) */
-  .ghost{position:absolute;top:0;bottom:0;background:transparent;border:0;
-    pointer-events:none;transition:left .08s ease;}
-  .ghostrow{position:absolute;left:0;right:0;background:transparent;border:0;
-    pointer-events:none;transition:opacity .1s;}
+  /* ghost drop-guides fully removed (were the vertical/horizontal "bands") */
+  .ghost{display:none !important;}
+  .ghostrow{display:none !important;}
 
   #stack,#active,#fx{position:absolute;inset:0;pointer-events:none;}
   #fx{z-index:5;}
@@ -494,6 +492,8 @@
   .gd-grid .c.t{background:linear-gradient(180deg,#7fd8ff,#48b6ff);}
   .gd-grid .c.w{background:linear-gradient(180deg,#7fffc0,#34d88a);}
   .gd-grid .c.o{background:linear-gradient(180deg,#ffc78c,#e08a4a);color:#2a1206;}
+  .gd-grid .c.dr{background:transparent;border:2px solid rgba(255,66,66,.9);}
+  .gd-grid .c.dg{background:repeating-linear-gradient(45deg,rgba(72,255,140,.5) 0 3px,transparent 3px 9px);border:2px solid rgba(255,66,66,.55);}
   .gd-cap{font-size:11.5px;color:var(--ink-dim);line-height:1.4;}
   .gd-tt{grid-auto-flow:column;}
   .wm{text-align:left;}
@@ -928,7 +928,7 @@
     <p class="lede">Letters rain into the deep. Stack them so a run spells a real word — across or down — and it clears, just like a Tetris line.</p>
     <div class="rules">
       • Move each falling letter and drop it where you want.<br>
-      • Any <b>2+ letter word</b> reading left→right or top→bottom <b>clears instantly</b>.<br>
+      • Any <b>3+ letter word</b> reading left→right or top→bottom <b>clears instantly</b>.<br>
       • Cleared letters vanish and the stack above drops in. Chains score big.<br>
       • Junk piles up. Let a column hit the ceiling and you're done.
     </div>
@@ -1057,6 +1057,14 @@
 
     <div class="g-sec"><h3>Chains &amp; scoring</h3>
       <p>Clearing a word drops the stack above it — if that spells another word, it clears too, and the <b>combo multiplier</b> climbs (×1.5 per step). Longer words and higher levels score far more. Every 6 words you level up and the fall speeds up.</p>
+    </div>
+
+    <div class="g-sec"><h3>Design targets <span style="color:var(--ink-dim);font-size:12px;font-weight:400;">— Main game only</span></h3>
+      <p>Hit the <b>Design</b> button to open the <b>Design Studio</b>, paint a shape onto a copy of the board, and press <b>Set target</b>. Its <span style="color:#ff5a5a;font-weight:700;">red outline</span> appears on your board. Now spell words <b>through those cells</b> — every cleared cell inside the shape fills with <span style="color:#48ff8c;font-weight:700;">green lines</span> (bricks sit right on top of them). Complete the whole shape and a dialog rewards you: <b>clear the board</b> or <b>delete blocks</b>. The <b>Overlay</b> button cycles the guide: full &rarr; outline only &rarr; off.</p>
+      <div class="g-demo">
+        <div class="gd-grid" id="gdDesign"></div>
+        <span class="gd-cap">Red = your target outline · green = cells already solved · a real brick sits in the shape</span>
+      </div>
     </div>
 
     <div class="g-sec"><h3>When a word clears</h3>
@@ -1601,6 +1609,7 @@
   const blockFlash=new Map();  // "r,c" -> ms an obstacle block arrived; drives its yellow->orange->grey cool-down
   const BLOCK_FLASH_MS=2900;   // how long a freshly-spawned block glows before settling to grey
   const BLACKHOLE="@";         // grid sentinel for black-hole blocks: a brick that lands on one is devoured
+  let clearFeed=[];            // keys of cells removed by word solutions this tick (design plugin consumes it)
   function landsOnBlackHole(r,c){ return r>=0&&r<ROWS&&c>=0&&c<COLS&&grid[r][c]===BLACKHOLE; }
   let bhPower=0;               // black-hole strength: each press of the button raises the pull range
   function nearestHole(r,c,reach){ let best=null,bd=1e9;   // closest black hole within `reach` cells of (r,c)
@@ -2635,7 +2644,7 @@
       const found=collectClears();
       if(found.cells.size===0) break;
       cleared+=found.cells.size;
-      found.cells.forEach(key=>{ const [rr,cc]=key.split(",").map(Number); grid[rr][cc]=null; lockedSet.delete(key); });
+      found.cells.forEach(key=>{ const [rr,cc]=key.split(",").map(Number); grid[rr][cc]=null; lockedSet.delete(key); clearFeed.push(key); });
       applyGravity();
     }
     if(cleared){ renderStack(); updateDanger(); toast(cleared+" tile"+(cleared>1?"s":"")+" cleared"); }
@@ -2769,7 +2778,7 @@
     // after the pop, remove + gravity + recurse
     _chainTimer=setTimeout(()=>{
       _chainTimer=0;
-      found.cells.forEach(key=>{ const [rr,cc]=key.split(",").map(Number); grid[rr][cc]=null; lockedSet.delete(key); });
+      found.cells.forEach(key=>{ const [rr,cc]=key.split(",").map(Number); grid[rr][cc]=null; lockedSet.delete(key); clearFeed.push(key); });
       applyGravity();
       renderStack();
       resolveBoard(true);           // chain continues the streak
@@ -4443,6 +4452,176 @@
   wireSeg("segSize","data-s",(v)=>{ tileScale=v; });
   wireSeg("segMin","data-m",(v)=>{ MINLEN=parseInt(v,10); });
   // ---- Sandbox editor wiring — every control here touches ONLY the sandbox game ----
+  // ===================== DESIGN STUDIO (plugin, Phase 1) =====================
+  // Fully self-contained: injects its own style + overlay + button. Touches no core state
+  // (reads ROWS/COLS at open only). Lets you burn a pattern, save/export/import/load it.
+  (function designStudio(){
+    const NS="spelltris_designs"; let cells=[], dR=12, dC=7;
+    const css=`
+    #designPanel .design-card{width:min(94vw,560px);max-height:92vh;overflow:auto;
+      background:linear-gradient(180deg,rgba(12,17,44,.98),rgba(6,9,26,.98));border:1px solid var(--glass-line);
+      border-radius:20px;padding:22px;box-shadow:0 24px 70px rgba(0,0,0,.6);}
+    #designPanel h2{margin:0 0 4px;color:var(--cyan);font-family:var(--display);}
+    .design-sub{color:var(--ink-dim);font-size:13px;margin-bottom:14px;}
+    .design-grid{display:grid;gap:3px;justify-content:center;margin:0 auto 14px;}
+    .dcell{width:24px;height:24px;border-radius:5px;background:rgba(120,140,200,.10);
+      border:1px solid rgba(120,140,200,.16);cursor:pointer;position:relative;transition:transform .06s;}
+    .dcell:hover{transform:scale(1.1);}
+    .dcell.lit{background:linear-gradient(180deg,rgba(255,214,120,.95),rgba(255,120,40,.95));
+      border-color:rgba(255,180,90,.8);box-shadow:0 0 12px rgba(255,150,60,.7),inset 0 0 8px rgba(255,240,200,.5);}
+    .dsmoke{position:absolute;left:50%;bottom:65%;width:10px;height:10px;border-radius:50%;pointer-events:none;
+      background:radial-gradient(circle,rgba(205,215,235,.55),transparent 70%);transform:translateX(-50%);animation:dsmoke 1s ease-out forwards;}
+    @keyframes dsmoke{0%{opacity:.75;transform:translate(-50%,0) scale(.5);}100%{opacity:0;transform:translate(-50%,-26px) scale(1.9);}}
+    .design-name{width:100%;box-sizing:border-box;padding:9px 11px;border-radius:10px;background:rgba(255,255,255,.05);
+      border:1px solid var(--glass-line);color:#eaf2ff;font-family:var(--display);margin-bottom:10px;}
+    .design-btns{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px;}
+    .design-btns button{flex:1 1 auto;padding:8px 10px;border-radius:9px;border:1px solid var(--glass-line);
+      background:rgba(56,232,255,.10);color:#dff7ff;font-family:var(--display);cursor:pointer;}
+    .design-btns button.ghost{background:rgba(255,255,255,.05);color:var(--ink-dim);}
+    .design-btns button.cta{background:var(--cyan);color:#04121a;font-weight:800;}
+    .dsn-list{display:flex;flex-direction:column;gap:5px;max-height:150px;overflow:auto;margin-bottom:8px;}
+    .dsn-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;
+      background:rgba(255,255,255,.04);border:1px solid var(--glass-line);font-size:13px;color:#dff7ff;}
+    .dsn-item span:first-child{cursor:pointer;flex:1;} .dsn-item:hover{background:rgba(56,232,255,.08);}
+    .dsn-item b{color:var(--cyan);} .dsn-item .del{color:#ff7d8c;cursor:pointer;padding:0 4px;}
+    .design-msg{color:var(--jade);font-size:12px;min-height:16px;}
+    #rewardDlg .rew-card{width:min(92vw,440px);text-align:center;background:linear-gradient(180deg,rgba(18,14,52,.98),rgba(8,6,24,.98));
+      border:1px solid rgba(56,232,255,.4);border-radius:22px;padding:28px 26px;box-shadow:0 24px 80px rgba(0,0,0,.7),0 0 40px rgba(56,232,255,.2);}
+    .rew-badge{font-size:44px;filter:drop-shadow(0 0 14px rgba(56,232,255,.8));margin-bottom:6px;}
+    #rewardDlg h2{margin:0 0 4px;color:var(--cyan);font-family:var(--display);}
+    .rew-sub{color:var(--ink-dim);font-size:13px;margin-bottom:18px;}
+    .rew-btns{display:flex;gap:10px;flex-wrap:wrap;}
+    .rew-btns button{flex:1 1 40%;padding:14px 12px;border-radius:12px;border:1px solid var(--glass-line);
+      background:rgba(56,232,255,.12);color:#eaf6ff;font-family:var(--display);font-size:14px;font-weight:700;cursor:pointer;transition:transform .08s;}
+    .rew-btns button:hover{transform:translateY(-2px);background:rgba(56,232,255,.2);}
+    #designStencil{position:absolute;inset:0;pointer-events:none;z-index:4;filter:drop-shadow(0 0 4px rgba(255,40,40,.6));}
+    #designFill{position:absolute;inset:0;pointer-events:none;}
+    .dfill{position:absolute;overflow:hidden;border-radius:4px;
+      background:repeating-linear-gradient(45deg,rgba(72,255,140,.5) 0 3px,transparent 3px 9px);}
+    .dstencil{position:absolute;box-sizing:border-box;}
+    #designHUD{position:fixed;left:14px;top:120px;z-index:19;background:linear-gradient(180deg,rgba(14,10,26,.95),rgba(8,5,18,.95));
+      border:1px solid rgba(255,80,80,.4);border-radius:12px;padding:10px 12px;font-family:var(--display);color:#ffd7d7;box-shadow:0 8px 22px rgba(0,0,0,.5);display:none;}
+    #designHUD .dh-title{color:#ff8f8f;font-weight:800;margin-bottom:6px;font-size:12px;}
+    #designHUD .dh-grid{display:grid;gap:2px;}
+    #designHUD .dh-c{width:9px;height:9px;border-radius:2px;background:rgba(255,255,255,.06);}
+    #designHUD .dh-c.on{background:linear-gradient(180deg,rgba(255,90,90,.95),rgba(200,30,30,.95));box-shadow:0 0 5px rgba(255,50,50,.7);}
+    #designHUD .dh-c.done{background:#ff2a2a;box-shadow:0 0 7px rgba(255,40,40,.9);}
+    #designPanel .design-card,#designPanel .dsn-list,#rewardDlg .rew-card{scrollbar-width:none;-ms-overflow-style:none;}
+    #designPanel .design-card::-webkit-scrollbar,#designPanel .dsn-list::-webkit-scrollbar,#rewardDlg .rew-card::-webkit-scrollbar{width:0;height:0;display:none;}`;
+    const st=document.createElement("style"); st.textContent=css; document.head.appendChild(st);
+    const ov=document.createElement("div"); ov.className="overlay hide"; ov.id="designPanel";
+    ov.innerHTML='<div class="design-card"><h2>\u25C8 Design Studio</h2>'+
+      '<div class="design-sub">Click cells to burn a pattern onto a copy of the board. Save it, export it, load it back. (Matching it in-play is coming next.)</div>'+
+      '<div id="designGrid" class="design-grid"></div>'+
+      '<input id="designName" class="design-name" placeholder="Name this design\u2026" maxlength="40">'+
+      '<div class="design-btns"><button id="dsnSave">Save</button><button id="dsnTarget">\u25C8 Set target</button><button id="dsnExport">Export</button>'+
+      '<button id="dsnImport">Import</button><button id="dsnClear" class="ghost">Clear</button>'+
+      '<button id="dsnClose" class="cta">Close</button>'+
+      '<input type="file" id="dsnFile" accept=".json,application/json" style="display:none"></div>'+
+      '<div id="dsnList" class="dsn-list"></div><div id="dsnMsg" class="design-msg"></div></div>';
+    document.body.appendChild(ov);
+    const D=id=>document.getElementById(id);
+    const say=t=>{ const m=D("dsnMsg"); if(m){ m.textContent=t; clearTimeout(say._t); say._t=setTimeout(()=>{if(m)m.textContent="";},2400);} };
+    function buildGrid(){ dC=7; dR=(window.innerWidth<=760)?13:12;   // exactly the Classic board (width 7)
+      cells=Array.from({length:dR},()=>Array(dC).fill(false)); renderGrid(); }
+    function renderGrid(){ const g=D("designGrid"); if(!g) return; g.style.gridTemplateColumns="repeat("+dC+", 24px)"; g.innerHTML="";
+      for(let r=0;r<dR;r++)for(let c=0;c<dC;c++){ const d=document.createElement("div"); d.className="dcell"+(cells[r][c]?" lit":""); d.dataset.r=r; d.dataset.c=c; g.appendChild(d); } }
+    function allDesigns(){ try{ return JSON.parse(localStorage.getItem(NS)||"[]"); }catch(_){ return []; } }
+    function saveAll(a){ try{ localStorage.setItem(NS, JSON.stringify(a)); }catch(_){} }
+    function curDesign(){ const pts=[]; for(let r=0;r<dR;r++)for(let c=0;c<dC;c++) if(cells[r][c]) pts.push([r,c]);
+      return { name:(D("designName").value||"Untitled").trim()||"Untitled", rows:dR, cols:dC, cells:pts }; }
+    function loadDesign(d){ dR=d.rows||12; dC=d.cols||7; cells=Array.from({length:dR},()=>Array(dC).fill(false));
+      (d.cells||[]).forEach(p=>{ const r=p[0],c=p[1]; if(r<dR&&c<dC) cells[r][c]=true; }); D("designName").value=d.name||""; renderGrid(); }
+    function renderList(){ const L=D("dsnList"); if(!L) return; const a=allDesigns(); L.innerHTML="";
+      if(!a.length){ L.innerHTML='<div style="color:var(--ink-dim);font-size:12px;">No saved designs yet.</div>'; return; }
+      a.forEach((d,i)=>{ const it=document.createElement("div"); it.className="dsn-item";
+        it.innerHTML='<span><b>'+(d.name||"Untitled")+'</b> \u00b7 '+(d.cells?d.cells.length:0)+' cells \u00b7 '+d.rows+'\u00d7'+d.cols+'</span><span class="del">\u2715</span>';
+        it.querySelector("span:first-child").addEventListener("click",()=>{ loadDesign(d); say("Loaded \u201c"+(d.name||"Untitled")+"\u201d"); });
+        it.querySelector(".del").addEventListener("click",ev=>{ ev.stopPropagation(); const arr=allDesigns(); arr.splice(i,1); saveAll(arr); renderList(); });
+        L.appendChild(it); }); }
+    ov.querySelector("#designGrid").addEventListener("click",e=>{ const t=e.target.closest(".dcell"); if(!t) return;
+      const r=+t.dataset.r, c=+t.dataset.c; cells[r][c]=!cells[r][c]; t.classList.toggle("lit",cells[r][c]);
+      if(cells[r][c]){ const s=document.createElement("div"); s.className="dsmoke"; t.appendChild(s); setTimeout(()=>s.remove(),1000); } });
+    D("dsnSave").addEventListener("click",()=>{ const d=curDesign(); if(!d.cells.length){ say("Burn some cells first."); return; }
+      const a=allDesigns(); const ex=a.findIndex(x=>x.name===d.name); if(ex>=0) a[ex]=d; else a.push(d); saveAll(a); renderList(); say("Saved \u201c"+d.name+"\u201d"); });
+    D("dsnExport").addEventListener("click",()=>{ const d=curDesign(); const b=new Blob([JSON.stringify(d,null,2)],{type:"application/json"});
+      const u=URL.createObjectURL(b); const a=document.createElement("a"); a.href=u; a.download=(d.name||"design").replace(/\s+/g,"-")+".spelltris-design.json"; a.click(); URL.revokeObjectURL(u); say("Exported."); });
+    D("dsnImport").addEventListener("click",()=>D("dsnFile").click());
+    D("dsnFile").addEventListener("change",e=>{ const f=e.target.files[0]; if(!f) return; const rd=new FileReader();
+      rd.onload=()=>{ try{ loadDesign(JSON.parse(rd.result)); say("Imported."); }catch(_){ say("Bad file."); } }; rd.readAsText(f); e.target.value=""; });
+    D("dsnClear").addEventListener("click",()=>{ cells=Array.from({length:dR},()=>Array(dC).fill(false)); renderGrid(); say("Cleared."); });
+    D("dsnClose").addEventListener("click",()=>ov.classList.add("hide"));
+    // ---- Phase 2: set a design as the in-play target, watch for it, reward on match ----
+    let activeDesign=null, dialogOpen=false, _prevState=null, solved=new Set();
+    function setTarget(){ const d=curDesign(); if(!d.cells.length){ say("Burn a pattern first."); return; }
+      const rs=d.cells.map(p=>p[0]), cs=d.cells.map(p=>p[1]); const mr=Math.min.apply(null,rs), mc=Math.min.apply(null,cs);
+      const offs=d.cells.map(p=>[p[0]-mr,p[1]-mc]);
+      const H=Math.max.apply(null,offs.map(o=>o[0]))+1, W=Math.max.apply(null,offs.map(o=>o[1]))+1;
+      activeDesign={ name:d.name, H, W, set:new Set(offs.map(o=>o[0]+","+o[1])), n:d.cells.length, abs:d.cells.slice() };
+      solved=new Set(); clearFeed.length=0;
+      say("Target set \u2014 build \u201c"+d.name+"\u201d in bricks to trigger the reward!");
+      try{ toast((typeof gameMode!=="undefined"&&gameMode==="classic"&&COLS===7)?("Design target: \u201c"+d.name+"\u201d"):"Designs only work in Classic mode (width 7)"); }catch(_){} }
+    D("dsnTarget").addEventListener("click",setTarget);
+    function findMatch(){ if(!activeDesign||typeof grid==="undefined"||!grid||!grid.length) return false;
+      const R=grid.length, C=grid[0].length, H=activeDesign.H, W=activeDesign.W, set=activeDesign.set;
+      for(let tr=0;tr+H<=R;tr++)for(let tc=0;tc+W<=C;tc++){ let ok=true;
+        for(let r=0;r<H&&ok;r++)for(let c=0;c<W;c++){ const v=grid[tr+r][tc+c]; const want=set.has(r+","+c);
+          const isB=(v!=null&&v>="A"&&v<="Z");
+          if(want){ if(!isB){ ok=false; break; } } else if(v!=null){ ok=false; break; } }
+        if(ok) return true; }
+      return false; }
+    const rew=document.createElement("div"); rew.className="overlay hide"; rew.id="rewardDlg";
+    rew.innerHTML='<div class="rew-card"><div class="rew-badge">\u25C8</div><h2 class="rew-title"></h2>'+
+      '<div class="rew-sub">Design matched \u2014 claim your reward:</div>'+
+      '<div class="rew-btns"><button id="rewClear">\uD83D\uDCA5 Clear the board</button><button id="rewDelete">\uD83C\uDFAF Delete blocks</button></div></div>';
+    document.body.appendChild(rew);
+    function closeReward(){ rew.classList.add("hide"); activeDesign=null; solved=new Set(); try{ if(_prevState) state=_prevState; }catch(_){} dialogOpen=false;
+      try{ toast("Reward claimed \u2014 re-arm a target in the Studio"); }catch(_){} }
+    D("rewClear").addEventListener("click",()=>{ try{ for(let r=0;r<grid.length;r++)for(let c=0;c<grid[0].length;c++) grid[r][c]=null; lockedSet.clear(); renderStack(); }catch(_){} closeReward(); });
+    D("rewDelete").addEventListener("click",()=>{ try{ const N=activeDesign?activeDesign.n:5; const filled=[];
+      for(let r=0;r<grid.length;r++)for(let c=0;c<grid[0].length;c++){ const v=grid[r][c]; if(v!=null) filled.push([r,c,(v==="#"||v==="@")?0:1]); }
+      filled.sort((a,b)=>a[2]-b[2]);   // remove obstacle/black-hole blocks first, then letters
+      for(let i=0;i<Math.min(N,filled.length);i++){ const p=filled[i]; grid[p[0]][p[1]]=null; lockedSet.delete(p[0]+","+p[1]); } renderStack(); }catch(_){} closeReward(); });
+    const boardEl=document.getElementById("board"); let stencilEl=null, hudEl=null;
+    function classicW7(){ return (typeof gameMode==="undefined"||gameMode==="classic") && (typeof COLS==="undefined"||COLS===7); }
+    function renderStencil(){ if(!boardEl) return; if(!stencilEl){ stencilEl=document.createElement("div"); stencilEl.id="designStencil"; (document.getElementById("boardWrap")||boardEl).appendChild(stencilEl); }
+      stencilEl.innerHTML=""; if(dsnView>=2 || !(activeDesign&&classicW7()&&(state==="play"||state==="pause"))) return;
+      const abs=activeDesign.abs||[], S=new Set(abs.map(p=>p[0]+","+p[1])), bd="2px solid rgba(255,66,66,.92)";
+      const ox=boardEl.offsetLeft+1, oy=boardEl.offsetTop+1;   // align with the board's content (bricks/fill)
+      abs.forEach(p=>{ const r=p[0],c=p[1]; if(c>=COLS||(grid&&r>=grid.length)) return;
+        const d=document.createElement("div"); d.className="dstencil"; d.style.left=(ox+c*cell)+"px"; d.style.top=(oy+r*cell)+"px"; d.style.width=cell+"px"; d.style.height=cell+"px";
+        if(!S.has((r-1)+","+c)) d.style.borderTop=bd; if(!S.has((r+1)+","+c)) d.style.borderBottom=bd;
+        if(!S.has(r+","+(c-1))) d.style.borderLeft=bd; if(!S.has(r+","+(c+1))) d.style.borderRight=bd;
+        stencilEl.appendChild(d); }); }
+    function renderHUD(){ if(!hudEl){ hudEl=document.createElement("div"); hudEl.id="designHUD"; document.body.appendChild(hudEl); }
+      if(!(activeDesign&&classicW7())){ hudEl.style.display="none"; return; } hudEl.style.display="block";
+      let h='<div class="dh-title">\u25C8 '+activeDesign.name+'</div><div class="dh-grid" style="grid-template-columns:repeat('+activeDesign.W+',9px)">';
+      h='<div class="dh-title">\u25C8 '+activeDesign.name+' \u00b7 '+solved.size+'/'+activeDesign.abs.length+'</div><div class="dh-grid" style="grid-template-columns:repeat('+activeDesign.W+',9px)">';
+      const rs=Math.min.apply(null,activeDesign.abs.map(p=>p[0])), cs=Math.min.apply(null,activeDesign.abs.map(p=>p[1]));
+      const sv=new Set(); solved.forEach(k=>{ const a=k.split(",").map(Number); sv.add((a[0]-rs)+","+(a[1]-cs)); });
+      for(let r=0;r<activeDesign.H;r++)for(let c=0;c<activeDesign.W;c++){ const on=activeDesign.set.has(r+","+c); h+='<div class="dh-c'+(on?(sv.has(r+","+c)?" done":" on"):"")+'"></div>'; } hudEl.innerHTML=h+'</div>'; }
+    let fillEl=null;
+    function renderFill(){ const stk=document.getElementById("stack");   // sits INSIDE #board, BEFORE #stack -> behind the bricks
+      if(!fillEl && boardEl){ fillEl=document.createElement("div"); fillEl.id="designFill"; if(stk) boardEl.insertBefore(fillEl,stk); else boardEl.appendChild(fillEl); }
+      if(!fillEl) return; fillEl.innerHTML=""; if(dsnView>=1 || !(activeDesign&&classicW7()&&(state==="play"||state==="pause"))) return;
+      solved.forEach(k=>{ const a=k.split(",").map(Number), r=a[0], c=a[1]; if(c>=COLS||(grid&&r>=grid.length)) return;
+        const d=document.createElement("div"); d.className="dfill"; d.style.left=(c*cell)+"px"; d.style.top=(r*cell)+"px"; d.style.width=cell+"px"; d.style.height=cell+"px"; fillEl.appendChild(d); }); }
+    setInterval(()=>{ renderStencil(); renderFill(); renderHUD();
+      if(openBtn) openBtn.style.display = classicW7() ? "" : "none";   // designer only in the main game
+      if(dialogOpen||typeof state==="undefined"||state!=="play"||!activeDesign||!classicW7()){ clearFeed.length=0; return; }
+      const dset=new Set(activeDesign.abs.map(p=>p[0]+","+p[1]));
+      while(clearFeed.length){ const k=clearFeed.shift(); if(dset.has(k)) solved.add(k); }
+      if(solved.size>=activeDesign.abs.length){ dialogOpen=true; _prevState=state; try{ state="pause"; }catch(_){}
+        const t=rew.querySelector(".rew-title"); if(t) t.textContent="You solved \u201c"+activeDesign.name+"\u201d!"; rew.classList.remove("hide"); } }, 450);
+    let dsnView=0;   // 0=both, 1=hide green fill, 2=hide green fill + red outline
+    const openBtn=document.createElement("button"); openBtn.className="btn"; openBtn.id="bDesign"; openBtn.textContent="Design"; openBtn.dataset.tip="Open the Design Studio \u2014 paint a shape to solve in-game (Main game only)";
+    const viewBtn=document.createElement("button"); viewBtn.className="btn"; viewBtn.id="bDesignView"; viewBtn.textContent="Overlay: Full"; viewBtn.dataset.tip="Cycle the on-board design overlay: full \u2192 outline only \u2192 off";
+    viewBtn.addEventListener("click",()=>{ dsnView=(dsnView+1)%3; viewBtn.textContent="Overlay: "+(dsnView===0?"Full":dsnView===1?"Outline":"Off"); viewBtn.classList.toggle("on",dsnView>0); renderFill(); renderStencil(); });
+    const anchor=document.getElementById("bHoles"); if(anchor&&anchor.parentNode) anchor.parentNode.insertBefore(openBtn, anchor.nextSibling); else document.body.appendChild(openBtn);
+    if(openBtn.parentNode) openBtn.parentNode.insertBefore(viewBtn, openBtn.nextSibling); else document.body.appendChild(viewBtn);
+    openBtn.addEventListener("click",()=>{ buildGrid(); renderList(); ov.classList.remove("hide"); });
+  })();
+
   (function wireSandbox(){
     const on=(id,ev,fn)=>{ const el=$(id); if(el) el.addEventListener(ev,fn); };
     on("sbxMin","input",()=>{ MINLEN=parseInt($("sbxMin").value,10)||MINLEN; $("sbxMinV").textContent=MINLEN; });
@@ -4591,6 +4770,16 @@
         gcell("e")+gcell("o","X")+gcell("o","X");
       tuck.dataset.built="1";
     }
+    const dsn=$("gdDesign");
+    if(dsn && !dsn.dataset.built){
+      dsn.style.gridTemplateColumns="repeat(3,22px)";
+      // plus-shaped target: red outline cells, one solved (green), and a real brick (P) sitting in the shape
+      dsn.innerHTML =
+        gcell("e")+gcell("dr")+gcell("e")+
+        gcell("dr")+gcell("dg")+gcell("dr")+
+        gcell("e")+gcell("t","P")+gcell("e");
+      dsn.dataset.built="1";
+    }
     const tt=$("gdTT");
     if(tt && !tt.dataset.built){
       // four little orientations: SM | S/M | MS | M/S  (compact)
@@ -4691,6 +4880,7 @@
     const sb=$("spawnBar"); if(sb) sb.style.display=(gameMode==="antigrav")?"none":"";
     document.querySelectorAll(".agbtn").forEach(b=>{ b.style.display=(gameMode==="antigrav")?"":"none"; });
     document.querySelectorAll(".classbtn").forEach(b=>{ b.style.display=(gameMode==="antigrav")?"none":""; });
+    { const dsn=document.getElementById("bDesign"); if(dsn) dsn.style.display=(gameMode==="classic")?"":"none"; }   // designer: Main game only
     if(gameMode==="antigrav") agEmitter={side:"top", idx:COLS>>1};
     layout();
     nextLetter=(gameMode==="antigrav") ? chooseLetter() : chooseLetterBiased();
