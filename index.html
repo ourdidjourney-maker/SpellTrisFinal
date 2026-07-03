@@ -299,6 +299,14 @@
     100%{transform:translate(var(--bhdx,0),var(--bhdy,0)) scale(.04) rotate(340deg);opacity:0;
       background:linear-gradient(180deg,rgba(220,20,14,1),rgba(90,4,4,1));box-shadow:0 0 26px rgba(255,30,20,.7);}
   }
+  .bhpop{position:absolute;pointer-events:none;z-index:10;border-radius:50%;
+    box-shadow:0 0 0 2px rgba(170,130,255,.95),0 0 22px rgba(150,100,240,.85),inset 0 0 16px rgba(190,150,255,.6);
+    animation:bhpop .62s cubic-bezier(.2,.7,.3,1) forwards;}
+  @keyframes bhpop{ 0%{transform:scale(.35);opacity:1;} 100%{transform:scale(2.8);opacity:0;} }
+  .bhboardflash{position:absolute;inset:0;pointer-events:none;z-index:9;
+    background:radial-gradient(circle at center,rgba(160,115,245,.28),transparent 72%);
+    animation:bhboardflash .5s ease-out forwards;}
+  @keyframes bhboardflash{ 0%{opacity:.85;} 100%{opacity:0;} }
   @keyframes lockedPulse{
     0%,100%{box-shadow:inset 0 1px 0 rgba(255,255,255,.28), 0 0 11px rgba(255,150,100,.32), 0 3px 8px rgba(0,0,0,.4);}
     50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.32), 0 0 24px rgba(255,176,110,.62), 0 3px 8px rgba(0,0,0,.4);}
@@ -928,7 +936,7 @@
     <p class="lede">Letters rain into the deep. Stack them so a run spells a real word — across or down — and it clears, just like a Tetris line.</p>
     <div class="rules">
       • Move each falling letter and drop it where you want.<br>
-      • Any <b>2+ letter word</b> reading left→right or top→bottom <b>clears instantly</b>.<br>
+      • Any <b>3+ letter word</b> reading left→right or top→bottom <b>clears instantly</b>.<br>
       • Cleared letters vanish and the stack above drops in. Chains score big.<br>
       • Junk piles up. Let a column hit the ceiling and you're done.
     </div>
@@ -1625,6 +1633,17 @@
     if(bhPower>=2) return nearestHole(pr,col,1);            // clicked twice -> pull from up to 1 cell away
     return null; }
   function clearBlackHoles(){ for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ if(grid[r][c]===BLACKHOLE){ grid[r][c]=null; lockedSet.delete(r+","+c); } } }
+  function popRandomHole(){          // a word was solved -> one random black hole implodes with a board shockwave
+    if(bhPower<1) return;
+    const holes=[]; for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ if(grid[r][c]===BLACKHOLE) holes.push([r,c]); }
+    if(!holes.length) return;
+    const h=holes[Math.floor(Math.random()*holes.length)]; grid[h[0]][h[1]]=null; lockedSet.delete(h[0]+","+h[1]);
+    const b=$("board"); if(b){
+      const ring=document.createElement("div"); ring.className="bhpop"; ring.style.left=(h[1]*cell)+"px"; ring.style.top=(h[0]*cell)+"px"; ring.style.width=cell+"px"; ring.style.height=cell+"px"; b.appendChild(ring); setTimeout(()=>{ if(ring.parentNode) ring.remove(); },700);
+      const fl=document.createElement("div"); fl.className="bhboardflash"; b.appendChild(fl); setTimeout(()=>{ if(fl.parentNode) fl.remove(); },520);
+    }
+    renderStack();
+  }
   function bhDevour(pr,t){            // fire the redshift collapse for the current active piece toward hole t
     const ins=tileInset();
     const pcells = active.mate ? [[0,0,active.letter],[active.mate.dr,active.mate.dc,active.mate.letter]] : [[0,0,active.letter]];
@@ -2645,7 +2664,7 @@
       const found=collectClears();
       if(found.cells.size===0) break;
       cleared+=found.cells.size;
-      found.cells.forEach(key=>{ const [rr,cc]=key.split(",").map(Number); grid[rr][cc]=null; lockedSet.delete(key); clearFeed.push(key); });
+      found.cells.forEach(key=>{ const [rr,cc]=key.split(",").map(Number); grid[rr][cc]=null; lockedSet.delete(key); clearFeed.push(key); }); if(bhPower>0) popRandomHole();
       applyGravity();
     }
     if(cleared){ renderStack(); updateDanger(); toast(cleared+" tile"+(cleared>1?"s":"")+" cleared"); }
@@ -2779,7 +2798,7 @@
     // after the pop, remove + gravity + recurse
     _chainTimer=setTimeout(()=>{
       _chainTimer=0;
-      found.cells.forEach(key=>{ const [rr,cc]=key.split(",").map(Number); grid[rr][cc]=null; lockedSet.delete(key); clearFeed.push(key); });
+      found.cells.forEach(key=>{ const [rr,cc]=key.split(",").map(Number); grid[rr][cc]=null; lockedSet.delete(key); clearFeed.push(key); }); if(bhPower>0) popRandomHole();
       applyGravity();
       renderStack();
       resolveBoard(true);           // chain continues the streak
@@ -3234,6 +3253,7 @@
     const el=$("monitor"); if(!el) return;
     const visible = debugOn && (state==="play" || state==="pause");
     el.classList.toggle("show", visible);
+    { const gb=$("guideBook"); if(gb && visible){ const h=el.getBoundingClientRect().height; if(h>40) gb.style.maxHeight=Math.round(h)+"px"; } }
     if(!visible) return;
     if(now-monT<150) return; monT=now;
     const body=$("monBody"); if(!body) return;
@@ -3537,7 +3557,7 @@
   function spawnObstacles(){ scatterBlocks(OBSTACLE, "obstacles"); }
   function spawnBlackHoles(){                     // cycle: off -> contact -> 1-cell pull -> off
     bhPower=(bhPower+1)%3;
-    if(bhPower===1) scatterBlocks(BLACKHOLE,"blackholes",0.20);   // 1st click: holes appear (max 20%)
+    if(bhPower===1) scatterBlocks(BLACKHOLE,"blackholes",0.10);   // 1st click: holes appear (max 10%)
     else if(bhPower===0){ clearBlackHoles(); renderStack(); } // 3rd click: holes vanish, off
     // bhPower===2 (2nd click): keep the same holes, just switch on the 1-cell pull
     const b=$("bHoles"); if(b){ b.textContent = bhPower===0?"Black Holes":("Black Holes \u00d7"+bhPower); b.classList.toggle("on", bhPower>0); }
@@ -4124,7 +4144,7 @@
     else if(e.key==="Enter"){ if(!e.repeat) rotate(); }
     else if(e.key==="+"||e.key==="=") changeSpeed(1);
     else if(e.key==="-"||e.key==="_") changeSpeed(-1);
-    else if(e.key==="`"){ debugOn=!debugOn; showFlash("Debug "+(debugOn?"On":"Off")); }
+    else if(e.key==="`"){ debugOn=!debugOn; showFlash("Debug "+(debugOn?"On":"Off")); { const gb=$("guideBook"); if(gb) gb.style.display=(debugOn||_sbxDebugOn)?"block":"none"; } }
     else if(!e.shiftKey && /^[a-z]$/i.test(e.key)) forceNextLetter(e.key.toUpperCase());
   });
   document.addEventListener("keyup",(e)=>{ if(e.key==="ArrowDown") setSoft(false); if(e.key==="ArrowUp") setSlow(false); if(e.key==="ArrowLeft"||e.key==="ArrowRight"){ heldArrows[e.key]=false; deleteFired=false; } });
@@ -4286,7 +4306,7 @@
     _sbxSetVar('--coral',s.coral); _sbxSetVar('--jade',s.jade); _sbxSetVar('--amber',s.amber); _sbxSetVar('--ink',s.ink);
     HEAT_STOPS[0].c=s.heat0.slice(); HEAT_STOPS[2].c=s.heat2.slice(); HEAT_STOPS[3].c=s.heat3.slice();
     _sbxSaved=null;
-    _sbxDebugOn=false; { const _dh=$("sbxDebug"); if(_dh) _dh.style.display="none"; }
+    _sbxDebugOn=false; { const _dh=$("sbxDebug"); if(_dh) _dh.style.display="none"; } { const _gb=$("guideBook"); if(_gb) _gb.style.display=(debugOn)?"block":"none"; }
   }
   function _sbxMsg(t){ const m=$("sbxMsg"); if(m){ m.textContent=t; clearTimeout(_sbxMsg._t); _sbxMsg._t=setTimeout(()=>{ if(m) m.textContent=""; },2200); } }
   let _sbxDebugOn=false;
@@ -4294,6 +4314,7 @@
   // catch the sandbox lockup in the act: whatever throws in the loop lands in lastError and shows here.
   function updateSbxDebug(){
     const el=$("sbxDebug"); if(!el) return;
+    { const gb=$("guideBook"); if(gb) gb.style.display=(debugOn||_sbxDebugOn)?"block":"none"; }
     if(!_sbxDebugOn){ el.style.display="none"; return; }
     el.style.display="block";
     const e=lastError;
@@ -4457,6 +4478,87 @@
   // ===================== DESIGN STUDIO (plugin, Phase 1) =====================
   // Fully self-contained: injects its own style + overlay + button. Touches no core state
   // (reads ROWS/COLS at open only). Lets you burn a pattern, save/export/import/load it.
+  // ===================== FIELD GUIDE (right-side booklet, mirrors the debug HUD) =====================
+  (function fieldGuide(){
+    const css=`
+    #guideBook{position:fixed;right:10px;top:10px;width:310px;max-height:86vh;z-index:120;display:none;
+      font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;line-height:1.5;color:#bff3ff;
+      background:rgba(6,12,26,.94);border:1px solid rgba(56,232,255,.5);border-radius:10px;padding:12px 14px;
+      box-shadow:0 8px 22px rgba(0,0,0,.55);overflow-y:auto;
+      scrollbar-width:thin;scrollbar-color:rgba(56,232,255,.4) transparent;}
+    #monitor,#sbxDebug{scrollbar-width:thin!important;scrollbar-color:rgba(56,232,255,.4) transparent!important;}
+    #sbxDebug{max-height:min(64vh,560px);overflow:auto;}
+    #guideBook::-webkit-scrollbar,#sbxDebug::-webkit-scrollbar,#monitor::-webkit-scrollbar{width:9px;height:9px;}
+    #guideBook::-webkit-scrollbar-track,#sbxDebug::-webkit-scrollbar-track,#monitor::-webkit-scrollbar-track{background:transparent;}
+    #guideBook::-webkit-scrollbar-thumb,#sbxDebug::-webkit-scrollbar-thumb,#monitor::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(56,232,255,.55),rgba(56,232,255,.28));border-radius:5px;}
+    #guideBook::-webkit-scrollbar-button,#sbxDebug::-webkit-scrollbar-button,#monitor::-webkit-scrollbar-button{display:none;}
+    #guideBook h3{color:#38e8ff;margin:0 0 4px;font-size:15px;letter-spacing:1px;}
+    #guideBook .gb-tag{color:#6fbfd0;font-size:10px;margin-bottom:9px;}
+    #guideBook h4{color:#8ff0ff;margin:15px 0 5px;font-size:12px;border-top:1px solid rgba(56,232,255,.16);padding-top:9px;letter-spacing:.5px;}
+    #guideBook .gb-nav{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px;}
+    #guideBook .gb-nav a{cursor:pointer;padding:3px 8px;border-radius:6px;background:rgba(56,232,255,.1);border:1px solid rgba(56,232,255,.25);color:#cdefff;font-size:10px;}
+    #guideBook .gb-nav a:hover{background:rgba(56,232,255,.22);}
+    #guideBook p{margin:3px 0 7px;} #guideBook b{color:#eaf6ff;}
+    #guideBook .k{color:#9be7a8;font-weight:700;}
+    #guideBook .gb-row{margin:3px 0;padding-left:11px;text-indent:-11px;}`;
+    const st=document.createElement("style"); st.textContent=css; document.head.appendChild(st);
+    const gb=document.createElement("div"); gb.id="guideBook";
+    gb.innerHTML=
+      '<h3>\u25E7 Field Guide</h3>'+
+      '<div class="gb-tag">Live reference \u2014 mirrors the debug readout on the left. Tap a topic to jump.</div>'+
+      '<div class="gb-nav"><a data-go="gDebug">Debug HUD</a><a data-go="gMonitor">Monitor</a><a data-go="gPanels">Stat panels</a><a data-go="gModes">Modes</a><a data-go="gToggles">Toggles</a><a data-go="gBlocks">Blocks &amp; Holes</a><a data-go="gDesign">Design</a><a data-go="gBit">BIT</a></div>'+
+      '<h4 id="gDebug">Debug HUD (bottom-left) \u2014 field by field</h4>'+
+      '<p>The panel opposite this one prints the engine\u2019s live internals:</p>'+
+      '<div class="gb-row"><span class="k">mode</span> \u2014 active mode: classic, antigrav, or sandbox.</div>'+
+      '<div class="gb-row"><span class="k">state</span> \u2014 play / pause / over. The loop only advances pieces while state=play.</div>'+
+      '<div class="gb-row"><span class="k">resolving</span> \u2014 the \u201cbusy\u201d flag held true while a clear/cascade animates. If it sticks true the game freezes; <b>Force play</b> clears it.</div>'+
+      '<div class="gb-row"><span class="k">chainTimer</span> \u2014 PENDING while a cascade step is queued, 0 when idle.</div>'+
+      '<div class="gb-row"><span class="k">active</span> \u2014 the current brick and its column (or NULL between pieces). Shows +mate for Tic-Tac pieces and \u201cag\u201d in Anti-Gravity.</div>'+
+      '<div class="gb-row"><span class="k">demo</span> \u2014 true when the AI autoplayer is driving.</div>'+
+      '<div class="gb-row"><span class="k">bonus</span> \u2014 true while a backwards-word bonus window is open.</div>'+
+      '<div class="gb-row"><span class="k">board</span> \u2014 grid size, COLS\u00d7ROWS.</div>'+
+      '<div class="gb-row"><span class="k">spawnCol</span> \u2014 the column new pieces enter from.</div>'+
+      '<div class="gb-row"><span class="k">autolock</span> \u2014 ms left on the per-piece auto-lock timer, or \u201c-\u201d if off.</div>'+
+      '<div class="gb-row"><span class="k">obstacles</span> \u2014 count of immovable grey blocks.</div>'+
+      '<div class="gb-row"><span class="k">holes</span> \u2014 count of black holes.</div>'+
+      '<div class="gb-row"><span class="k">bhPull</span> \u2014 hole reach: off \u00b7 contact (land on one) \u00b7 1cell (pulls nearby bricks).</div>'+
+      '<div class="gb-row"><span class="k">\u26a0 LAST ERROR</span> \u2014 the exact text, kind, and top stack line of any caught exception. Otherwise \u201cno errors captured.\u201d</div>'+
+      '<h4 id="gMonitor">Debug Monitor row</h4>'+
+      '<div class="gb-row"><span class="k">fill</span> \u2014 % of cells occupied (blocks included).</div>'+
+      '<div class="gb-row"><span class="k">danger</span> \u2014 tallest column as % of board height; flags red past 75%.</div>'+
+      '<div class="gb-row"><span class="k">tallest</span> \u2014 tallest column height in cells.</div>'+
+      '<div class="gb-row"><span class="k">empty</span> \u2014 open cells left.</div>'+
+      '<div class="gb-row"><span class="k">locked</span> \u2014 gravity-immune cells (floated bricks, obstacles, holes).</div>'+
+      '<div class="gb-row"><span class="k">obstacles / black holes / pull</span> \u2014 live counts and current hole pull mode.</div>'+
+      '<h4 id="gPanels">Reading the stat panels</h4>'+
+      '<p><b>Board (left):</b> Fill %, Danger %, Tallest col, Empty cells, Locked; Letters \u2014 Dropped, Vowels, Consonants, live V:C ratio; and a letter-frequency histogram.</p>'+
+      '<p><b>Performance (right):</b> Time, Words, Words/min, Pieces/min, Avg letters/word, Best clear, Longest; Streaks \u2014 Best combo, Max chain, Letters cleared; Engine \u2014 Speed, Multiplier, Tutor ops, Dictionary size; Words-by-direction (\u2192 \u2190 \u2193 \u2191); and a running Words Solved ledger.</p>'+
+      '<h4 id="gModes">Game modes</h4>'+
+      '<p><b>Classic</b> \u2014 letters fall under gravity; steer, stack, spell to clear. The design-target system lives here (width-7 only).</p>'+
+      '<p><b>Anti-Gravity</b> \u2014 no gravity; fire letters from an edge emitter (tap a + rail), steer the drift, place. Clear the whole board to win; a flood is game over. Extra controls: Emitter, Gravity, Force, Timer, Float fade.</p>'+
+      '<p><b>Sandbox</b> \u2014 a live editor that plays like Classic. Resize the board, retune speed / word-length / level pace / tile size / timer, recolor everything, flip any rule, and Save/Load/Download/Import mods. Fully isolated \u2014 restores every default on exit.</p>'+
+      '<h4 id="gToggles">Control toggles</h4>'+
+      '<div class="gb-row"><span class="k">Tutor</span> \u2014 highlights the spot that completes a real word.</div>'+
+      '<div class="gb-row"><span class="k">Next</span> \u2014 show/hide the upcoming letter.</div>'+
+      '<div class="gb-row"><span class="k">Bag</span> \u2014 Even vs Weighted letter distribution.</div>'+
+      '<div class="gb-row"><span class="k">Random</span> \u2014 randomize the spawn column.</div>'+
+      '<div class="gb-row"><span class="k">Cascade / Shotgun</span> \u2014 chain-clear behavior; burst spawn variant.</div>'+
+      '<div class="gb-row"><span class="k">Timer</span> \u2014 per-piece auto-lock countdown.</div>'+
+      '<div class="gb-row"><span class="k">Tic Tac</span> \u2014 two-brick joined pieces (Enter rotates).</div>'+
+      '<div class="gb-row"><span class="k">Delete FX</span> \u2014 pulse the brick when deleting it is affordable.</div>'+
+      '<div class="gb-row"><span class="k">Sentence Dots / Bonus</span> \u2014 sentence-target markers; reward backwards words.</div>'+
+      '<div class="gb-row"><span class="k">Lightning / Storm / Smoke / Static</span> \u2014 clear lightning; ambient storm; smoke off clears; 3-D arcs to nearby bricks.</div>'+
+      '<h4 id="gBlocks">Blocks &amp; Black Holes</h4>'+
+      '<p><b>Blocks</b> \u2014 scatter immovable grey obstacles (5\u201330%). Bricks stack on them; they never join a word and never break a valid word alongside them. Press again to reroll.</p>'+
+      '<p><b>Black Holes</b> \u2014 3-tap cycle: <b>1)</b> holes appear (\u226410%); a brick that touches one is devoured with a redshift collapse. <b>2)</b> pull widens to 1 cell (falling bricks gravitate in). <b>3)</b> off. Each word you solve makes one random hole implode with a board shockwave.</p>'+
+      '<h4 id="gDesign">Design targets (Main game only)</h4>'+
+      '<p>Open <b>Design</b>, paint a shape, <b>Set target</b>. Its red outline appears on the board; spell words through those cells to fill them with green dots. Complete the shape for a reward (clear board or delete blocks). <b>Overlay</b> cycles: full \u2192 outline \u2192 dots \u2192 off.</p>'+
+      '<h4 id="gBit">Built-In Test (BIT)</h4>'+
+      '<p>From the home screen the BIT self-checks the engine (word detection, gravity, clears, tutor, obstacles, black holes) and reports pass/fail with a reproducible seed. Run 1\u201310 randomized passes at once. It saves and restores state, so it never touches a live game.</p>';
+    document.body.appendChild(gb);
+    gb.addEventListener("click",e=>{ const a=e.target.closest("a[data-go]"); if(!a) return; const t=document.getElementById(a.dataset.go); if(t) t.scrollIntoView({behavior:"smooth",block:"start"}); });
+  })();
+
   (function designStudio(){
     const NS="spelltris_designs"; let cells=[], dR=12, dC=7;
     const css=`
