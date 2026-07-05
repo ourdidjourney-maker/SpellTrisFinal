@@ -307,6 +307,18 @@
     background:radial-gradient(circle at center,rgba(160,115,245,.28),transparent 72%);
     animation:bhboardflash .5s ease-out forwards;}
   @keyframes bhboardflash{ 0%{opacity:.85;} 100%{opacity:0;} }
+  @keyframes jumbleShake{ 0%,100%{transform:translate(0,0) rotate(0);}
+    8%{transform:translate(-7px,4px) rotate(-1.4deg);} 17%{transform:translate(8px,-5px) rotate(1.6deg);}
+    26%{transform:translate(-9px,-3px) rotate(-1.8deg);} 35%{transform:translate(7px,6px) rotate(1.3deg);}
+    44%{transform:translate(-6px,-6px) rotate(-1.2deg);} 53%{transform:translate(9px,3px) rotate(1.7deg);}
+    62%{transform:translate(-8px,5px) rotate(-1.5deg);} 71%{transform:translate(6px,-7px) rotate(1.1deg);}
+    80%{transform:translate(-5px,4px) rotate(-1deg);} 90%{transform:translate(4px,-3px) rotate(.7deg);} }
+  .jumbling{animation:jumbleShake .3s ease-in-out 5;}
+  .jtumble{animation:jtumble .34s ease-in-out infinite;z-index:6;}
+  @keyframes jtumble{ 0%,100%{transform:translate(0,0) rotate(0);}
+    25%{transform:translate(var(--jx,4px),var(--jy,-4px)) rotate(var(--jr,16deg));}
+    50%{transform:translate(calc(var(--jx,4px)*-1),var(--jy,4px)) rotate(calc(var(--jr,16deg)*-1));}
+    75%{transform:translate(var(--jy,4px),var(--jx,-4px)) rotate(calc(var(--jr,16deg)*.6));} }
   @keyframes lockedPulse{
     0%,100%{box-shadow:inset 0 1px 0 rgba(255,255,255,.28), 0 0 11px rgba(255,150,100,.32), 0 3px 8px rgba(0,0,0,.4);}
     50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.32), 0 0 24px rgba(255,176,110,.62), 0 3px 8px rgba(0,0,0,.4);}
@@ -848,6 +860,7 @@
       <button class="btn" id="bStorm">Lightning: On</button>
       <button class="btn" id="bThunder">Storm Mode: Off</button>
       <button class="btn on" id="bSmoke">Smoke: On</button>
+      <button class="btn" id="bJumble" title="Shake the whole board and rearrange every brick (once per game)">Jumble</button>
       <button class="btn on" id="bSpark">Static: On</button>
       <button class="btn" id="bBlocks">Blocks</button>
       <button class="btn" id="bHoles">Black Holes</button>
@@ -936,7 +949,7 @@
     <p class="lede">Letters rain into the deep. Stack them so a run spells a real word — across or down — and it clears, just like a Tetris line.</p>
     <div class="rules">
       • Move each falling letter and drop it where you want.<br>
-      • Any <b>3+ letter word</b> reading left→right or top→bottom <b>clears instantly</b>.<br>
+      • Any <b>2+ letter word</b> reading left→right or top→bottom <b>clears instantly</b>.<br>
       • Cleared letters vanish and the stack above drops in. Chains score big.<br>
       • Junk piles up. Let a column hit the ceiling and you're done.
     </div>
@@ -1119,6 +1132,7 @@
         <li><b>Smoke</b> &mdash; toggle the wispy smoke that rises off cleared cells (the orange cooling glow stays either way).</li>
         <li><b>Blocks</b> &mdash; scatter immovable grey obstacle blocks (a random 5&ndash;30% of the board) that bricks collide with and stack on. They flare yellow on arrival and cool to grey. Press again for a fresh random layout.</li>
         <li><b>Black Holes</b> &mdash; a three-tap cycle. <b>Tap once:</b> dark black-hole blocks appear (up to 20% of the board) and any brick that touches one is devoured &mdash; it red-shifts, shrinks, and spirals in. <b>Tap again:</b> their pull widens to <b>1 cell</b>, so bricks falling nearby gravitate straight into them mid-drop. <b>Tap a third time:</b> the holes vanish and the effect switches off.</li>
+        <li><b>Jumble</b> &mdash; once per game, in any mode, violently shake the whole board like a jar of marbles. Every brick and block tumbles around, then settles into a brand-new random arrangement (any words that form clear on the spot).</li>
         <li><b>&#9654;AI Play</b> &mdash; hand your live game to the AI; press <b>Take Over</b> on the badge to take it back. See "Watch the AI play" below.</li>
         <li><b>Words</b> — open the dictionary to add, import, or export your own word lists (saved on your device).</li>
         <li><b>Sound</b> — toggle audio.</li>
@@ -1644,6 +1658,58 @@
     }
     renderStack();
   }
+  let jumbleUsed=false;   // one jumble per game
+  function doJumble(){
+    if(jumbleUsed || state!=="play" || !grid) return;
+    jumbleUsed=true;
+    const jb=$("bJumble"); if(jb){ jb.textContent="Jumbled"; jb.classList.add("on"); jb.disabled=true; }
+    const wrap=$("boardWrap")||$("board"); if(wrap) wrap.classList.add("jumbling");
+    const tiles=stackEl?[...stackEl.querySelectorAll(".tile")]:[]; const bw=COLS*cell, bh=ROWS*cell, sz=cell, ins=tileInset();
+    const parts=tiles.map(t=>{ const bx=parseFloat(t.style.left)||0, by=parseFloat(t.style.top)||0; t.style.transition="none"; t.style.zIndex="7";
+      const val=t.classList.contains("obstacle")?OBSTACLE:t.classList.contains("blackhole")?BLACKHOLE:(t.querySelector(".glyph")?t.querySelector(".glyph").textContent:"");
+      return { t, val, bx, by, x:bx, y:by, vx:(Math.random()*2-1)*bw*(.7+Math.random()*.6), vy:(Math.random()*2-1)*bh*(.7+Math.random()*.6), a:Math.random()*360, va:(Math.random()*2-1)*520 }; });
+    try{ toast("\uD83C\uDF00 Jumble!"); }catch(_){}
+    const ps=state; state="pause";                 // freeze play while the jar shakes
+    const t0=performance.now(); let _jraf=0, _jlast=t0;
+    const jstep=(now)=>{ const dt=Math.min(.05,(now-_jlast)/1000); _jlast=now;
+      parts.forEach(p=>{ p.x+=p.vx*dt; p.y+=p.vy*dt; p.a+=p.va*dt;
+        if(p.x<0){ p.x=0; p.vx=Math.abs(p.vx); } else if(p.x>bw-sz){ p.x=bw-sz; p.vx=-Math.abs(p.vx); }
+        if(p.y<0){ p.y=0; p.vy=Math.abs(p.vy); } else if(p.y>bh-sz){ p.y=bh-sz; p.vy=-Math.abs(p.vy); }
+        p.t.style.transform="translate("+(p.x-p.bx).toFixed(1)+"px,"+(p.y-p.by).toFixed(1)+"px) rotate("+p.a.toFixed(0)+"deg)"; });
+      if(now-t0<1200) _jraf=requestAnimationFrame(jstep); };
+    _jraf=requestAnimationFrame(jstep);
+    setTimeout(()=>{
+      if(_jraf) cancelAnimationFrame(_jraf);
+      if(wrap) wrap.classList.remove("jumbling");
+      const items=[]; for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ if(grid[r][c]!=null){ items.push(grid[r][c]); grid[r][c]=null; } }
+      lockedSet.clear();
+      for(let i=items.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=items[i]; items[i]=items[j]; items[j]=t; }
+      if(gameMode==="antigrav"){                   // Anti-Gravity: bricks float ANYWHERE, not stacked to the floor
+        const cells=[]; for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++) cells.push([r,c]);
+        for(let i=cells.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=cells[i]; cells[i]=cells[j]; cells[j]=t; }
+        items.forEach((v,i)=>{ const cl=cells[i]; if(cl){ grid[cl[0]][cl[1]]=v; lockedSet.add(cl[0]+","+cl[1]); } });
+      } else {
+        const colFill=Array(COLS).fill(ROWS);        // Classic / Sandbox: settle to the bottom like a jar
+        items.forEach(v=>{ let col=Math.floor(Math.random()*COLS), tries=0;
+          while(colFill[col]<=0 && tries++<COLS*5) col=Math.floor(Math.random()*COLS);
+          if(colFill[col]<=0){ for(let cc=0;cc<COLS;cc++) if(colFill[cc]>0){ col=cc; break; } }
+          if(colFill[col]>0){ const r=--colFill[col]; grid[r][col]=v; if(v===OBSTACLE||v===BLACKHOLE) lockedSet.add(r+","+col); } });
+      }
+      // land each flying brick smoothly into a final cell holding its value (glide + rotate upright)
+      const byVal={}; for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ const v=grid[r][c]; if(v!=null){ (byVal[v]=byVal[v]||[]).push([r,c]); } }
+      parts.forEach(p=>{ const q=byVal[p.val]; p.t.style.transition="transform .5s cubic-bezier(.18,.86,.3,1)";
+        if(q && q.length){ const cl=q.shift(); const tx=cl[1]*cell+ins, ty=cl[0]*cell+ins;
+          p.t.style.transform="translate("+(tx-p.bx).toFixed(1)+"px,"+(ty-p.by).toFixed(1)+"px) rotate(0deg)"; }
+        else { p.t.style.transition="all .4s ease"; p.t.style.opacity="0"; } });
+      setTimeout(()=>{          // brick are home -> hand off to the real stack, then clear any words
+        renderStack();
+        let g=0; while(g++<ROWS*COLS){ const cc=collectClears(); if(!cc.cells.size) break;
+          cc.cells.forEach(k=>{ const [r,c]=k.split(",").map(Number); grid[r][c]=null; lockedSet.delete(k); clearFeed.push(k); }); applyGravity(); }
+        renderStack();
+        state=(ps==="over")?ps:"play";
+      }, 520);
+    }, 1200);
+  }
   function bhDevour(pr,t){            // fire the redshift collapse for the current active piece toward hole t
     const ins=tileInset();
     const pcells = active.mate ? [[0,0,active.letter],[active.mate.dr,active.mate.dc,active.mate.letter]] : [[0,0,active.letter]];
@@ -1722,7 +1788,6 @@
   function canDelete(){ return state==="play" && !!active && !resolving && score>=2; }
   function deleteActive(){
     if(state!=="play"||!active||resolving) return;
-    if(active.ag) return;
     if(score<2){ showFlash("Need 2+ points to delete a brick"); blip(160,0.12,"square",0.12); return; }
     const cost=deleteCost();
     score=Math.max(0, score-cost); updateHud();
@@ -4201,6 +4266,7 @@
   $("bStorm").addEventListener("click",toggleStorm);
   $("bThunder").addEventListener("click",toggleThunder);
   $("bSmoke").addEventListener("click",toggleSmoke);
+  { const jb=$("bJumble"); if(jb) jb.addEventListener("click",doJumble); }
   { const bs=$("bSpark"); if(bs) bs.addEventListener("click",toggleSpark); }
   { const bb=$("bBlocks"); if(bb) bb.addEventListener("click",spawnObstacles); }
   { const bh=$("bHoles"); if(bh) bh.addEventListener("click",spawnBlackHoles); }
@@ -4971,6 +5037,7 @@
     // Bigger = faster/harder, smaller = slower/easier. (Speed also rises with level.)
     cps=2.2*speedMul; softDrop=false; slowFall=false; consonantStreak=0; resolving=false; parts=[]; clearDebris(); heatCells=[]; smoke=[];
     lockedSet=new Set();
+    jumbleUsed=false; { const jb=$("bJumble"); if(jb){ jb.textContent="Jumble"; jb.classList.remove("on"); jb.disabled=false; } }
     updateHud();
     $("startScreen").classList.add("hide");
     $("overScreen").classList.add("hide");
