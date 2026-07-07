@@ -2496,40 +2496,48 @@
     }
     positionActive();
   }
-  let _buzzTiles=[];
+  let _buzzTiles=[], _anticProx=0, _anticCells=0, _anticWord="";
+  // Detection only (no DOM): every empty cell the active letter could reach that completes a word.
+  function anticWordCells(){
+    const heat={}; let bestWord="", bestProx=0;
+    if(!active || active.letter===OBSTACLE || active.letter===BLACKHOLE) return {heat, word:"", prox:0};
+    const L=active.letter, CELL=(cell>0?cell:40);
+    const isLtr=v=>v!=null && v!==OBSTACLE && v!==BLACKHOLE;
+    const hasNb=(r,c)=>((r>0&&isLtr(grid[r-1][c]))||(r<ROWS-1&&isLtr(grid[r+1][c]))||(c>0&&isLtr(grid[r][c-1]))||(c<COLS-1&&isLtr(grid[r][c+1])));
+    const bx=(active.ag?((active.x||0)+CELL/2):(active.col*CELL+CELL/2)), by=((active.y!=null?active.y:0)+CELL/2);
+    const cand=[];
+    if(active.ag){ for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ if(grid[r][c]==null && hasNb(r,c)) cand.push([r,c]); } }
+    else { const c=active.col; for(let r=0;r<ROWS;r++){ if(c>=0&&c<COLS&&grid[r][c]==null && hasNb(r,c)) cand.push([r,c]); } }
+    cand.forEach(a=>{ const cr=a[0], cc=a[1];
+      grid[cr][cc]=L; const words=wordsThroughCell(cr,cc); grid[cr][cc]=null;
+      if(!words.length) return;
+      const cx=cc*CELL+CELL/2, cy=cr*CELL+CELL/2, dist=Math.hypot(bx-cx,by-cy);
+      const prox=Math.max(0, Math.min(1, 1-dist/(5*CELL)));
+      if(prox<=0.02) return;
+      if(prox>bestProx){ bestProx=prox; bestWord=(words[0]||[]).map(p=>(p.r===cr&&p.c===cc)?L:((grid[p.r]&&grid[p.r][p.c])||"?")).join(""); }
+      words.forEach(w=>w.forEach(p=>{ if(!(p.r===cr&&p.c===cc)){ const k=p.r+","+p.c; if(!heat[k]||heat[k]<prox) heat[k]=prox; } }));
+    });
+    return {heat, word:bestWord, prox:bestProx};
+  }
   function updateWordAnticipation(){          // bricks that would complete a word buzz harder as the letter nears
     if(_buzzTiles.length){ _buzzTiles.forEach(t=>{ t.style.transform=""; t.style.boxShadow=""; t.style.filter=""; }); _buzzTiles=[]; }
+    _anticProx=0; _anticCells=0; _anticWord="";
     if(!active || state!=="play" || resolving || active.letter===OBSTACLE || active.letter===BLACKHOLE) return;
     if(!anticVibrate && !anticSmoke && !anticHeat) return;
     const ins=tileInset();
-    let pr=-1, pc=active.col, prox=0;
-    if(active.ag){
-      const tr=Math.max(0,Math.min(ROWS-1,Math.floor((active.y+cell/2)/cell)));
-      const tc=Math.max(0,Math.min(COLS-1,Math.floor((active.x+cell/2)/cell)));
-      if(grid[tr] && grid[tr][tc]==null){ pr=tr; pc=tc; prox=1; }
-    } else {
-      pr=landingRow();
-      if(pr>=0){ const landTop=pr*cell; prox=Math.max(0, Math.min(1, 1-(landTop-active.y)/(4*cell))); }
-    }
-    if(pr<0||pc<0||pr>=ROWS||pc>=COLS||!grid[pr]||grid[pr][pc]!=null||prox<=0.02) return;
-    grid[pr][pc]=active.letter;
-    const words=wordsThroughCell(pr,pc);
-    grid[pr][pc]=null;
-    if(!words.length) return;
-    const cells=new Set();
-    words.forEach(w=>w.forEach(p=>{ if(!(p.r===pr&&p.c===pc)) cells.add(p.r+","+p.c); }));
-    if(!cells.size) return;
+    const {heat, word, prox}=anticWordCells();
+    const keys=Object.keys(heat); if(!keys.length) return;
+    _anticProx=prox; _anticCells=keys.length; _anticWord=word;
     const map={}, st=document.getElementById("stack");
     if(st) for(const t of st.children){ const c=Math.round((parseFloat(t.style.left)-ins)/cell), r=Math.round((parseFloat(t.style.top)-ins)/cell); map[r+","+c]=t; }
-    const amp=0.4+prox*2.6, rot=prox*4;
-    const H=(15+prox*42).toFixed(0), L=(52+prox*20).toFixed(0);   // 15deg orange-red -> 57deg yellow, brighter as hotter
-    cells.forEach(k=>{ const t=map[k]; if(!t) return;
+    keys.forEach(k=>{ const t=map[k]; if(!t) return; const p=heat[k];
+      const amp=0.4+p*2.6, rot=p*4, H=(15+p*42).toFixed(0), L=(52+p*20).toFixed(0);   // 15deg orange-red -> 57deg yellow, brighter as hotter
       if(anticVibrate){ const rx=(Math.random()*2-1)*amp, ry=(Math.random()*2-1)*amp, rr=(Math.random()*2-1)*rot;
         t.style.transform="translate("+rx.toFixed(1)+"px,"+ry.toFixed(1)+"px) rotate("+rr.toFixed(1)+"deg)"; }
       if(anticHeat){
-        t.style.boxShadow="inset 0 0 "+(5+prox*16).toFixed(0)+"px "+(2+prox*5).toFixed(0)+"px hsla("+H+",100%,"+L+"%,"+(prox*0.9).toFixed(2)+"), 0 0 "+(prox*22).toFixed(0)+"px hsla("+H+",100%,56%,"+(prox*0.72).toFixed(2)+")";
-        t.style.filter=prox>0.04?("brightness("+(1+prox*0.55).toFixed(2)+") saturate("+(1+prox*0.8).toFixed(2)+")"):""; }
-      if(anticSmoke && smokeOn && Math.random()<prox*0.11){ try{ emitSmoke(new Set([k])); }catch(_){} }   // hotter/harder buzz -> more smoke
+        t.style.boxShadow="inset 0 0 "+(5+p*16).toFixed(0)+"px "+(2+p*5).toFixed(0)+"px hsla("+H+",100%,"+L+"%,"+(p*0.9).toFixed(2)+"), 0 0 "+(p*22).toFixed(0)+"px hsla("+H+",100%,56%,"+(p*0.72).toFixed(2)+")";
+        t.style.filter=p>0.04?("brightness("+(1+p*0.55).toFixed(2)+") saturate("+(1+p*0.8).toFixed(2)+")"):""; }
+      if(anticSmoke && smokeOn && Math.random()<p*0.11){ try{ emitSmoke(new Set([k])); }catch(_){} }   // hotter/harder buzz -> more smoke
       _buzzTiles.push(t); });
   }
   function updateLandHint(){
@@ -3399,6 +3407,22 @@
           if(grid[r][c0+len]!==BLACKHOLE) return "black hole moved or vanished under gravity";
           return true;
         } },
+      { name:"anticipation flags every completable truncated word", group:"ANTICIPATION  \u00b7  seed "+bitSeed,
+        desc:"a falling letter that can complete an adjacent truncated word marks that word's bricks (not the empty cell) to buzz",
+        fn:()=>{
+          MINLEN=3; mkBoard(7, 8);
+          grid[5][2]="A"; grid[5][3]="T";        // truncated "AT" at row 5, cols 2-3
+          const prevA=active;
+          active={ letter:"C", col:1, y:5*(cell>0?cell:40), x:1*(cell>0?cell:40), mate:null };   // C over col 1 -> C A T
+          let res; try{ res=anticWordCells(); }catch(e){ active=prevA; return "threw: "+e.message; }
+          active=prevA;
+          if(!res || !res.heat) return "anticipation returned nothing";
+          const hasA=("5,2" in res.heat), hasT=("5,3" in res.heat), hasC=("5,1" in res.heat);
+          if(!DICT.has("CAT")) return true;                    // dictionary variant without CAT; skip
+          if(!(hasA&&hasT)) return "did not flag the A/T bricks of CAT (heat: "+Object.keys(res.heat).join(" ")+")";
+          if(hasC) return "wrongly flagged the empty completing cell itself";
+          return true;
+        } },
       { name:"misspell flags near-words at multiple lengths", group:"MISSPELL  \u00b7  seed "+bitSeed,
         desc:"across shortest-word settings of 3, 4 and 5, a scramble of a real word is flagged red while the real word and gibberish are not",
         fn:()=>{
@@ -3623,6 +3647,7 @@
     row(dangerPct>=75?"warn":"", "fill "+fillPct+"% · danger "+dangerPct+"% · tallest "+tallest+" · empty "+(total-filled)+" · locked "+lockedSet.size);
     row("dim", "obstacles "+_obs+" · black holes "+_holes+" · pull "+(bhPower===0?"off":bhPower===1?"contact":"1-cell"));
     { const mr=misspellOn?misspellRuns().length:0; row("dim", "misspell "+(misspellOn?"on":"off")+" · runs "+mr+" · chips "+_missChips.size+" · dismissed "+_missDismissed.size+" · minlen "+Math.max(2,MINLEN)+" · anagrams "+ANAGRAMS.size); }
+    row("dim", "antic "+(_anticCells?("\u2192"+(_anticWord||"?")):"idle")+" · prox "+_anticProx.toFixed(2)+" · bricks "+_anticCells+" · vib "+(anticVibrate?"on":"off")+" heat "+(anticHeat?"on":"off")+" smoke "+(anticSmoke?"on":"off"));
     row("", COLS+"\u00d7"+ROWS+" · minlen "+MINLEN+" · dict "+DICT.size+" · bag "+activeBag.length+" letters"+(excluded.size?(" · excluded "+[...excluded].join("")):""));
 
     // ---- RESTRICTED ----
@@ -4618,6 +4643,7 @@
     { let _obs=0,_holes=0; for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ const v=grid[r][c]; if(v===OBSTACLE)_obs++; else if(v===BLACKHOLE)_holes++; }
       s+="obstacles="+_obs+"   holes="+_holes+"   bhPull="+(bhPower===0?"off":bhPower===1?"contact":"1cell")+"\n"; }
     { const mr=misspellOn?misspellRuns().length:0; s+="misspell="+(misspellOn?"on":"off")+"   runs="+mr+"   chips="+_missChips.size+"   dismissed="+_missDismissed.size+"\n"; }
+    s+="antic="+(_anticCells?("\u2192"+(_anticWord||"?")):"idle")+"   prox="+_anticProx.toFixed(2)+"   bricks="+_anticCells+"\n";
     if(e){ s+="\u26a0 LAST ERROR ["+e.kind+"] +"+e.t+"ms\n"+e.msg+"\n"+((e.stack||"").split("\n")[0]||""); }
     else { s+="\u2713 no errors captured"; }
     el.textContent=s;
