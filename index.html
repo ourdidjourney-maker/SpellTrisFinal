@@ -227,6 +227,15 @@
     border-radius:8px;padding:4px 10px;box-shadow:0 6px 16px rgba(0,0,0,.45),0 0 14px rgba(72,255,140,.28);
     animation:misspillIn .2s ease forwards;}
   .misspill:hover{border-color:rgba(120,255,190,.9);}
+  .anticbtn{position:relative;cursor:default;}
+  .anticmenu{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:6px;display:none;flex-direction:column;gap:3px;
+    background:rgba(6,12,26,.97);border:1px solid rgba(56,232,255,.42);border-radius:8px;padding:5px;z-index:90;min-width:112px;box-shadow:0 8px 20px rgba(0,0,0,.5);}
+  .anticbtn:hover .anticmenu{display:flex;}
+  .anticopt{font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px;cursor:pointer;color:var(--ink-dim,#8fb);background:rgba(255,255,255,.04);border:1px solid transparent;white-space:nowrap;text-align:left;}
+  .anticopt:hover{background:rgba(56,232,255,.14);}
+  .anticopt.on{color:#eafffb;border-color:rgba(56,232,255,.5);background:rgba(56,232,255,.16);}
+  .anticopt::before{content:"\25CB  ";opacity:.5;}
+  .anticopt.on::before{content:"\25CF  ";color:#5fffa0;opacity:1;}
   .misspill .mx{margin-left:8px;opacity:.5;font-size:10px;}
   .misspill .msep{opacity:.4;margin:0 5px;font-weight:400;}
   .misspill .mmore{opacity:.6;}
@@ -900,6 +909,7 @@
       <button class="btn" id="bJumble" title="Shake the whole board and rearrange every brick (once per game)">Jumble</button>
       <button class="btn" id="bBricked" title="Bricked: emitters have a 20% chance to drop an undeletable sentinel block with each new brick (all modes)">Bricked: Off</button>
       <button class="btn classbtn" id="bLetterPrev" title="Letter preview: shows a faint copy of the falling letter inside its predicted landing cell, so you never have to look away from the board">Letter Preview: Off</button>
+      <div class="btn anticbtn" id="bAntic">Word FX<div class="anticmenu"><div class="anticopt on" data-fx="vib">Vibration</div><div class="anticopt on" data-fx="smoke">Smoke</div><div class="anticopt on" data-fx="heat">Heat</div></div></div>
       <button class="btn" id="bMisspell" title="Misspell: turns a letter red when a run of bricks isn't a word but uses the exact letters of one, like GAURD for GUARD">Misspell: Off</button>
       <button class="btn on" id="bSpark">Static: On</button>
       <button class="btn" id="bBlocks">Blocks</button>
@@ -1721,6 +1731,7 @@
   let paintedSentinels=new Set();   // "r,c" cells painted via Sentinel mode — immune to jumble
   let brickedOn=false;    // Bricked mode: emitters occasionally drop an undeletable sentinel
   let letterPreviewOn=false;   // faint letter shown in the predicted landing cell
+  let anticVibrate=true, anticSmoke=true, anticHeat=true;   // word-anticipation effect sub-toggles
   function doJumble(){
     if(jumbleUsed || state!=="play" || !grid) return;
     jumbleUsed=true;
@@ -2489,6 +2500,7 @@
   function updateWordAnticipation(){          // bricks that would complete a word buzz harder as the letter nears
     if(_buzzTiles.length){ _buzzTiles.forEach(t=>{ t.style.transform=""; t.style.boxShadow=""; t.style.filter=""; }); _buzzTiles=[]; }
     if(!active || state!=="play" || resolving || active.letter===OBSTACLE || active.letter===BLACKHOLE) return;
+    if(!anticVibrate && !anticSmoke && !anticHeat) return;
     const ins=tileInset();
     let pr=-1, pc=active.col, prox=0;
     if(active.ag){
@@ -2511,11 +2523,14 @@
     if(st) for(const t of st.children){ const c=Math.round((parseFloat(t.style.left)-ins)/cell), r=Math.round((parseFloat(t.style.top)-ins)/cell); map[r+","+c]=t; }
     const amp=0.4+prox*2.6, rot=prox*4;
     const H=(15+prox*42).toFixed(0), L=(52+prox*20).toFixed(0);   // 15deg orange-red -> 57deg yellow, brighter as hotter
-    cells.forEach(k=>{ const t=map[k]; if(t){ const rx=(Math.random()*2-1)*amp, ry=(Math.random()*2-1)*amp, rr=(Math.random()*2-1)*rot;
-      t.style.transform="translate("+rx.toFixed(1)+"px,"+ry.toFixed(1)+"px) rotate("+rr.toFixed(1)+"deg)";
-      t.style.boxShadow="inset 0 0 "+(5+prox*16).toFixed(0)+"px "+(2+prox*5).toFixed(0)+"px hsla("+H+",100%,"+L+"%,"+(prox*0.9).toFixed(2)+"), 0 0 "+(prox*22).toFixed(0)+"px hsla("+H+",100%,56%,"+(prox*0.72).toFixed(2)+")";
-      t.style.filter=prox>0.04?("brightness("+(1+prox*0.55).toFixed(2)+") saturate("+(1+prox*0.8).toFixed(2)+")"):"";
-      _buzzTiles.push(t); } });
+    cells.forEach(k=>{ const t=map[k]; if(!t) return;
+      if(anticVibrate){ const rx=(Math.random()*2-1)*amp, ry=(Math.random()*2-1)*amp, rr=(Math.random()*2-1)*rot;
+        t.style.transform="translate("+rx.toFixed(1)+"px,"+ry.toFixed(1)+"px) rotate("+rr.toFixed(1)+"deg)"; }
+      if(anticHeat){
+        t.style.boxShadow="inset 0 0 "+(5+prox*16).toFixed(0)+"px "+(2+prox*5).toFixed(0)+"px hsla("+H+",100%,"+L+"%,"+(prox*0.9).toFixed(2)+"), 0 0 "+(prox*22).toFixed(0)+"px hsla("+H+",100%,56%,"+(prox*0.72).toFixed(2)+")";
+        t.style.filter=prox>0.04?("brightness("+(1+prox*0.55).toFixed(2)+") saturate("+(1+prox*0.8).toFixed(2)+")"):""; }
+      if(anticSmoke && smokeOn && Math.random()<prox*0.11){ try{ emitSmoke(new Set([k])); }catch(_){} }   // hotter/harder buzz -> more smoke
+      _buzzTiles.push(t); });
   }
   function updateLandHint(){
     let host=document.getElementById("landHint");
@@ -4472,6 +4487,9 @@
   { const jb=$("bJumble"); if(jb) jb.addEventListener("click",doJumble); }
   { const bk=$("bBricked"); if(bk) bk.addEventListener("click",()=>{ brickedOn=!brickedOn; bk.textContent="Bricked: "+(brickedOn?"On":"Off"); bk.classList.toggle("on",brickedOn); }); }
   { const lp=$("bLetterPrev"); if(lp) lp.addEventListener("click",()=>{ letterPreviewOn=!letterPreviewOn; lp.textContent="Letter Preview: "+(letterPreviewOn?"On":"Off"); lp.classList.toggle("on",letterPreviewOn); }); }
+  document.querySelectorAll(".anticopt").forEach(o=>{ o.addEventListener("click",e=>{ e.stopPropagation();
+    const fx=o.dataset.fx, on=!o.classList.contains("on"); o.classList.toggle("on",on);
+    if(fx==="vib") anticVibrate=on; else if(fx==="smoke") anticSmoke=on; else if(fx==="heat") anticHeat=on; }); });
   { const bm=$("bMisspell"); if(bm) bm.addEventListener("click",()=>{ misspellOn=!misspellOn; bm.textContent="Misspell: "+(misspellOn?"On":"Off"); bm.classList.toggle("on",misspellOn); try{ renderStack(); }catch(_){} }); }
   { const bs=$("bSpark"); if(bs) bs.addEventListener("click",toggleSpark); }
   { const bb=$("bBlocks"); if(bb) bb.addEventListener("click",spawnObstacles); }
