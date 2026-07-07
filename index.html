@@ -202,10 +202,15 @@
   @keyframes dangerpulse{50%{opacity:.5;}}
 
   /* ghost drop-guides fully removed (were the vertical/horizontal "bands") */
-  .ghost{display:none !important;}
+  #ghost{display:none !important;}
   .ghostrow{display:none !important;}
 
   #stack,#active,#fx{position:absolute;inset:0;pointer-events:none;}
+  .landcell{position:absolute;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:2px solid rgba(120,200,255,.75);border-radius:8px;
+    box-shadow:0 0 12px rgba(120,200,255,.45),inset 0 0 10px rgba(120,200,255,.2);pointer-events:none;
+    animation:landPulse 1s ease-in-out infinite;}
+  .landcell .lpv{color:rgba(160,215,255,.42);font-family:var(--display,inherit);font-weight:800;line-height:1;}
+  @keyframes landPulse{ 0%,100%{opacity:.32;} 50%{opacity:.95;} }
   #fx{z-index:5;}
   #heatcv{position:absolute;inset:0;pointer-events:none;}                 /* cooling-metal glow — sits BEHIND the tiles (DOM order) */
   #smokecv{position:absolute;inset:0;pointer-events:none;z-index:7;}       /* wispy smoke — rises in front of everything */
@@ -215,6 +220,22 @@
   .tile{position:absolute;border-radius:10px;display:flex;align-items:center;justify-content:center;
     font-family:var(--display);font-weight:600;will-change:transform,top,left;}
   .tile .glyph{line-height:1;transform:translateY(.02em);}
+  .tile .glyph.misspell{color:#ff5a5a;text-shadow:0 0 7px rgba(255,70,70,.6);}
+  .misspill{position:absolute;z-index:16;transform:translate(-50%,-100%);margin-top:-7px;pointer-events:auto;cursor:pointer;opacity:0;
+    font-family:var(--display);font-size:12px;font-weight:700;letter-spacing:.6px;white-space:nowrap;color:#eafff2;
+    background:linear-gradient(180deg,rgba(18,40,34,.97),rgba(9,24,20,.97));border:1px solid rgba(90,255,170,.6);
+    border-radius:8px;padding:4px 10px;box-shadow:0 6px 16px rgba(0,0,0,.45),0 0 14px rgba(72,255,140,.28);
+    animation:misspillIn .2s ease forwards;}
+  .misspill:hover{border-color:rgba(120,255,190,.9);}
+  .misspill .mx{margin-left:8px;opacity:.5;font-size:10px;}
+  .misspill .msep{opacity:.4;margin:0 5px;font-weight:400;}
+  .misspill .mmore{opacity:.6;}
+  .misspill .mv{animation:mvGreen 3s ease forwards;}
+  @keyframes mvGreen{ 0%{color:#eafff2;text-shadow:none;} 100%{color:#3dff8c;text-shadow:0 0 9px rgba(72,255,140,.85);} }
+  .misspill::after{content:"";position:absolute;left:50%;top:100%;transform:translateX(-50%);border:5px solid transparent;border-top-color:rgba(90,255,170,.6);}
+  .misspill.below{transform:translate(-50%,0);margin-top:7px;}
+  .misspill.below::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:rgba(90,255,170,.6);}
+  @keyframes misspillIn{ from{opacity:0;} to{opacity:1;} }
 
   .tile.active{
     z-index:4;
@@ -307,6 +328,14 @@
     background:radial-gradient(circle at center,rgba(160,115,245,.28),transparent 72%);
     animation:bhboardflash .5s ease-out forwards;}
   @keyframes bhboardflash{ 0%{opacity:.85;} 100%{opacity:0;} }
+  .sentpop{position:absolute;pointer-events:none;z-index:7;border-radius:8px;
+    background:radial-gradient(circle,rgba(255,236,180,.95),rgba(190,190,200,.35) 58%,transparent 74%);
+    animation:sentpop .68s cubic-bezier(.3,.7,.3,1) forwards;}
+  .sentpop::after{content:"";position:absolute;inset:-3px;border-radius:10px;border:2px solid rgba(255,214,130,.85);animation:sentring .68s ease-out forwards;}
+  @keyframes sentpop{ 0%{opacity:1;transform:scale(1) rotate(0);}
+    35%{opacity:1;transform:scale(1.18) rotate(10deg);}
+    100%{opacity:0;transform:scale(.15) rotate(120deg);} }
+  @keyframes sentring{ 0%{opacity:.9;transform:scale(.55);} 100%{opacity:0;transform:scale(2);} }
   @keyframes jumbleShake{ 0%,100%{transform:translate(0,0) rotate(0);}
     8%{transform:translate(-7px,4px) rotate(-1.4deg);} 17%{transform:translate(8px,-5px) rotate(1.6deg);}
     26%{transform:translate(-9px,-3px) rotate(-1.8deg);} 35%{transform:translate(7px,6px) rotate(1.3deg);}
@@ -572,9 +601,10 @@
     border:1px solid var(--glass-line);
     box-shadow:inset 0 0 40px rgba(56,232,255,.04),inset 0 2px 0 rgba(255,255,255,.04),
       0 18px 44px rgba(0,0,0,.5);
-    scrollbar-width:none;-ms-overflow-style:none;}
-  .statpanel::-webkit-scrollbar{width:0;height:0;display:none;}
-  .statpanel::-webkit-scrollbar-thumb{background:transparent;}
+    scrollbar-width:thin;scrollbar-color:rgba(56,232,255,.5) transparent;}
+  .statpanel::-webkit-scrollbar{width:6px;height:6px;}
+  .statpanel::-webkit-scrollbar-track{background:transparent;}
+  .statpanel::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(56,232,255,.55),rgba(56,232,255,.28));border-radius:5px;}
   .sp-h{font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--cyan);
     opacity:.85;margin:9px 0 4px;padding-bottom:4px;border-bottom:1px solid rgba(120,160,255,.14);}
   .sp-h:first-child{margin-top:0;}
@@ -597,6 +627,9 @@
     border-radius:6px;padding:2px 4px 2px 6px;}
   .rschip b{cursor:pointer;color:#ffb0bd;font-weight:700;line-height:1;}
   .rschip b:hover{color:#fff;}
+  .rlchip{display:inline-flex;align-items:center;font-size:10px;font-weight:700;letter-spacing:.06em;
+    color:#ffd9e0;background:rgba(196,42,66,.28);border:1px solid rgba(255,118,140,.5);border-radius:6px;padding:2px 7px;}
+  .rlnone{font-size:10px;color:var(--ink-dim,#7fa8b8);opacity:.6;}
   .vid{display:flex;flex-direction:column;gap:8px;}
   .vid-frame{position:relative;width:100%;aspect-ratio:16/9;border-radius:8px;overflow:hidden;
     background:rgba(10,16,34,.6);border:1px solid var(--glass-line);display:flex;align-items:center;justify-content:center;}
@@ -772,6 +805,8 @@
         <button id="rsGo" class="vid-go" title="Block">+</button>
       </div>
       <div id="rsList" class="rslist"></div>
+      <div class="sp-sub">Restricted letters</div>
+      <div id="rlList" class="rslist"></div>
     </aside>
     <div id="boardCol">
     <div id="spawnBar" aria-label="Choose drop column"></div>
@@ -811,6 +846,8 @@
       <div class="sp-row"><span class="sp-l">Multiplier</span><span class="sp-v" id="stMult">&times;1</span></div>
       <div class="sp-row"><span class="sp-l">Tutor ops</span><span class="sp-v" id="stTut">0</span></div>
       <div class="sp-row"><span class="sp-l">Dictionary</span><span class="sp-v" id="stDict">0</span></div>
+      <div class="sp-row"><span class="sp-l">Score / piece</span><span class="sp-v" id="stEff">0</span></div>
+      <div class="sp-row"><span class="sp-l">Peak fill</span><span class="sp-v" id="stPeak">0%</span></div>
       <div class="sp-sub">Words by direction</div>
       <div class="dirgrid">
         <div class="dir"><b>&rarr;</b><span id="stLR">0</span></div>
@@ -861,6 +898,9 @@
       <button class="btn" id="bThunder">Storm Mode: Off</button>
       <button class="btn on" id="bSmoke">Smoke: On</button>
       <button class="btn" id="bJumble" title="Shake the whole board and rearrange every brick (once per game)">Jumble</button>
+      <button class="btn" id="bBricked" title="Bricked: emitters have a 20% chance to drop an undeletable sentinel block with each new brick (all modes)">Bricked: Off</button>
+      <button class="btn classbtn" id="bLetterPrev" title="Letter preview: shows a faint copy of the falling letter inside its predicted landing cell, so you never have to look away from the board">Letter Preview: Off</button>
+      <button class="btn" id="bMisspell" title="Misspell: turns a letter red when a run of bricks isn't a word but uses the exact letters of one, like GAURD for GUARD">Misspell: Off</button>
       <button class="btn on" id="bSpark">Static: On</button>
       <button class="btn" id="bBlocks">Blocks</button>
       <button class="btn" id="bHoles">Black Holes</button>
@@ -1133,6 +1173,8 @@
         <li><b>Blocks</b> &mdash; scatter immovable grey obstacle blocks (a random 5&ndash;30% of the board) that bricks collide with and stack on. They flare yellow on arrival and cool to grey. Press again for a fresh random layout.</li>
         <li><b>Black Holes</b> &mdash; a three-tap cycle. <b>Tap once:</b> dark black-hole blocks appear (up to 20% of the board) and any brick that touches one is devoured &mdash; it red-shifts, shrinks, and spirals in. <b>Tap again:</b> their pull widens to <b>1 cell</b>, so bricks falling nearby gravitate straight into them mid-drop. <b>Tap a third time:</b> the holes vanish and the effect switches off.</li>
         <li><b>Jumble</b> &mdash; once per game, in any mode, violently shake the whole board like a jar of marbles. Every brick and block tumbles around, then settles into a brand-new random arrangement (any words that form clear on the spot).</li>
+        <li><b>Bricked</b> &mdash; a toggle for any mode. While it's on, every new brick from the emitter has a 20&percnt; chance of instead being a grey sentinel block that drops in from the same spot. You never know when one's coming, and these sentinels <b>cannot be deleted</b> &mdash; they lock wherever they land and get in your way.</li>
+        <li><b>Misspell</b> &mdash; a learning aid you can toggle on. When a run of bricks isn't a real word but uses the exact letters of one &mdash; for example <b>GAURD</b>, which is really <b>GUARD</b> &mdash; those letters turn red, so you can see you've almost spelled a word and just need to rearrange it.</li>
         <li><b>&#9654;AI Play</b> &mdash; hand your live game to the AI; press <b>Take Over</b> on the badge to take it back. See "Watch the AI play" below.</li>
         <li><b>Words</b> — open the dictionary to add, import, or export your own word lists (saved on your device).</li>
         <li><b>Sound</b> — toggle audio.</li>
@@ -1216,7 +1258,7 @@
   </div>
 </div>
 
-<div id="sbxDebug" style="display:none;position:fixed;left:8px;bottom:8px;z-index:120;max-width:min(94vw,420px);
+<div id="sbxDebug" style="display:none;position:fixed;left:8px;bottom:224px;z-index:120;max-width:min(94vw,420px);
   font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;line-height:1.45;color:#bff3ff;
   background:rgba(6,12,26,.93);border:1px solid rgba(56,232,255,.5);border-radius:10px;padding:9px 11px;
   box-shadow:0 8px 22px rgba(0,0,0,.55);white-space:pre-wrap;pointer-events:none;"></div>
@@ -1555,6 +1597,10 @@
   //  DICTIONARY (with persistence + custom words)
   // ============================================================
   let DICT = new Set();
+  let ANAGRAMS = new Set();   // sorted-letter signatures of dictionary words (drives Misspell detection)
+  let SIG2WORD = new Map();   // signature -> a correctly spelled word, for the correction chip
+  let misspellOn = false;
+  function msig(s){ return s.split("").sort().join(""); }
   function cleanWord(w){ return (w||"").toUpperCase().replace(/[^A-Z]/g,""); }
   function seedDict(){
     DICT = new Set();
@@ -1586,6 +1632,7 @@
      "wrest xenon xylem yacht yearn yodel yokel yucca yummy zebra zesty zonal").split(/\s+/).forEach(w=>{ const c=cleanWord(w); if(c.length>=2) DICT.add(c); });
     // merge custom
     loadCustom().forEach(w=>DICT.add(w));
+    ANAGRAMS=new Set(); SIG2WORD=new Map(); DICT.forEach(w=>{ if(w.length>=2){ const s=msig(w); ANAGRAMS.add(s); if(!SIG2WORD.has(s)) SIG2WORD.set(s,[]); SIG2WORD.get(s).push(w); } });   // Misspell detection + corrections
     refreshDictCount();
   }
   function loadCustom(){
@@ -1647,6 +1694,18 @@
     if(bhPower>=2) return nearestHole(pr,col,1);            // clicked twice -> pull from up to 1 cell away
     return null; }
   function clearBlackHoles(){ for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ if(grid[r][c]===BLACKHOLE){ grid[r][c]=null; lockedSet.delete(r+","+c); } } }
+  function popSentinels(n){          // Bricked: each solved word implodes one random (non-painted) sentinel
+    if(!brickedOn || n<=0) return;
+    const sents=[]; for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ if(grid[r][c]===OBSTACLE && !paintedSentinels.has(r+","+c)) sents.push([r,c]); }
+    if(!sents.length) return;
+    for(let i=sents.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=sents[i]; sents[i]=sents[j]; sents[j]=t; }
+    const take=Math.min(n, sents.length), b=$("board");
+    for(let k=0;k<take;k++){ const s=sents[k]; grid[s[0]][s[1]]=null; lockedSet.delete(s[0]+","+s[1]);
+      if(b){ const el=document.createElement("div"); el.className="sentpop"; el.style.left=(s[1]*cell)+"px"; el.style.top=(s[0]*cell)+"px"; el.style.width=cell+"px"; el.style.height=cell+"px"; b.appendChild(el); setTimeout(()=>{ if(el.parentNode) el.remove(); },680); }
+      try{ burst(s[1], s[0], "hsla(45,95%,66%,", 12); }catch(_){}   // amber shatter sparks
+    }
+    renderStack();
+  }
   function popRandomHole(){          // a word was solved -> one random black hole implodes with a board shockwave
     if(bhPower<1) return;
     const holes=[]; for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ if(grid[r][c]===BLACKHOLE) holes.push([r,c]); }
@@ -1659,12 +1718,15 @@
     renderStack();
   }
   let jumbleUsed=false;   // one jumble per game
+  let paintedSentinels=new Set();   // "r,c" cells painted via Sentinel mode — immune to jumble
+  let brickedOn=false;    // Bricked mode: emitters occasionally drop an undeletable sentinel
+  let letterPreviewOn=false;   // faint letter shown in the predicted landing cell
   function doJumble(){
     if(jumbleUsed || state!=="play" || !grid) return;
     jumbleUsed=true;
     const jb=$("bJumble"); if(jb){ jb.textContent="Jumbled"; jb.classList.add("on"); jb.disabled=true; }
     const wrap=$("boardWrap")||$("board"); if(wrap) wrap.classList.add("jumbling");
-    const tiles=stackEl?[...stackEl.querySelectorAll(".tile")]:[]; const bw=COLS*cell, bh=ROWS*cell, sz=cell, ins=tileInset();
+    const tiles=stackEl?[...stackEl.querySelectorAll(".tile")].filter(t=>{ const _in=tileInset(); const _c=Math.round((parseFloat(t.style.left)-_in)/cell), _r=Math.round((parseFloat(t.style.top)-_in)/cell); return !paintedSentinels.has(_r+","+_c); }):[]; const bw=COLS*cell, bh=ROWS*cell, sz=cell, ins=tileInset();
     const parts=tiles.map(t=>{ const bx=parseFloat(t.style.left)||0, by=parseFloat(t.style.top)||0; t.style.transition="none"; t.style.zIndex="7";
       const val=t.classList.contains("obstacle")?OBSTACLE:t.classList.contains("blackhole")?BLACKHOLE:(t.querySelector(".glyph")?t.querySelector(".glyph").textContent:"");
       return { t, val, bx, by, x:bx, y:by, vx:(Math.random()*2-1)*bw*(.7+Math.random()*.6), vy:(Math.random()*2-1)*bh*(.7+Math.random()*.6), a:Math.random()*360, va:(Math.random()*2-1)*520 }; });
@@ -1681,22 +1743,23 @@
     setTimeout(()=>{
       if(_jraf) cancelAnimationFrame(_jraf);
       if(wrap) wrap.classList.remove("jumbling");
-      const items=[]; for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ if(grid[r][c]!=null){ items.push(grid[r][c]); grid[r][c]=null; } }
+      const items=[]; for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ if(grid[r][c]!=null && !paintedSentinels.has(r+","+c)){ items.push(grid[r][c]); grid[r][c]=null; } }
       lockedSet.clear();
+      paintedSentinels.forEach(k=>{ const a=k.split(",").map(Number); if(grid[a[0]]&&grid[a[0]][a[1]]===OBSTACLE) lockedSet.add(k); });   // painted sentinels stay put
       for(let i=items.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=items[i]; items[i]=items[j]; items[j]=t; }
-      if(gameMode==="antigrav"){                   // Anti-Gravity: bricks float ANYWHERE, not stacked to the floor
-        const cells=[]; for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++) cells.push([r,c]);
+      if(gameMode==="antigrav"){                   // Anti-Gravity: bricks float into any EMPTY cell
+        const cells=[]; for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ if(grid[r][c]==null) cells.push([r,c]); }
         for(let i=cells.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const t=cells[i]; cells[i]=cells[j]; cells[j]=t; }
         items.forEach((v,i)=>{ const cl=cells[i]; if(cl){ grid[cl[0]][cl[1]]=v; lockedSet.add(cl[0]+","+cl[1]); } });
       } else {
-        const colFill=Array(COLS).fill(ROWS);        // Classic / Sandbox: settle to the bottom like a jar
-        items.forEach(v=>{ let col=Math.floor(Math.random()*COLS), tries=0;
-          while(colFill[col]<=0 && tries++<COLS*5) col=Math.floor(Math.random()*COLS);
-          if(colFill[col]<=0){ for(let cc=0;cc<COLS;cc++) if(colFill[cc]>0){ col=cc; break; } }
-          if(colFill[col]>0){ const r=--colFill[col]; grid[r][col]=v; if(v===OBSTACLE||v===BLACKHOLE) lockedSet.add(r+","+col); } });
+        const has=cc=>{ for(let r=0;r<ROWS;r++) if(grid[r][cc]==null) return true; return false; };
+        items.forEach(v=>{ let col=Math.floor(Math.random()*COLS), tries=0;   // Classic/Sandbox: settle to lowest EMPTY cell
+          while(!has(col) && tries++<COLS*6) col=Math.floor(Math.random()*COLS);
+          if(!has(col)){ for(let cc=0;cc<COLS;cc++) if(has(cc)){ col=cc; break; } }
+          if(has(col)){ for(let r=ROWS-1;r>=0;r--){ if(grid[r][col]==null){ grid[r][col]=v; if(v===OBSTACLE||v===BLACKHOLE) lockedSet.add(r+","+col); break; } } } });
       }
       // land each flying brick smoothly into a final cell holding its value (glide + rotate upright)
-      const byVal={}; for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ const v=grid[r][c]; if(v!=null){ (byVal[v]=byVal[v]||[]).push([r,c]); } }
+      const byVal={}; for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ const v=grid[r][c]; if(v!=null && !paintedSentinels.has(r+","+c)){ (byVal[v]=byVal[v]||[]).push([r,c]); } }
       parts.forEach(p=>{ const q=byVal[p.val]; p.t.style.transition="transform .5s cubic-bezier(.18,.86,.3,1)";
         if(q && q.length){ const cl=q.shift(); const tx=cl[1]*cell+ins, ty=cl[0]*cell+ins;
           p.t.style.transform="translate("+(tx-p.bx).toFixed(1)+"px,"+(ty-p.by).toFixed(1)+"px) rotate(0deg)"; }
@@ -1788,6 +1851,7 @@
   function canDelete(){ return state==="play" && !!active && !resolving && score>=2; }
   function deleteActive(){
     if(state!=="play"||!active||resolving) return;
+    if(active.sentinel){ showFlash("A Bricked sentinel can't be deleted"); blip(160,0.12,"square",0.12); return; }
     if(score<2){ showFlash("Need 2+ points to delete a brick"); blip(160,0.12,"square",0.12); return; }
     const cost=deleteCost();
     score=Math.max(0, score-cost); updateHud();
@@ -1840,14 +1904,14 @@
 
   // ---- nerd-stat telemetry ----
   let gameStart=0, bestCombo=0, maxChain=0, curCascade=0, longestWord=0, longestWordStr="",
-      bestClear=0, lettersCleared=0, totalDrops=0;
+      bestClear=0, lettersCleared=0, totalDrops=0, peakFill=0;
   let letterCounts={};                 // 'A'..'Z' -> count of letters placed
   let dirStats={lr:0,rl:0,td:0,bu:0};  // words cleared reading →  ←  ↓  ↑
   let lfBars=null;                     // built letter-frequency bar refs
   function resetStats(){
     gameStart=performance.now();
     bestCombo=0; maxChain=0; curCascade=0; longestWord=0; longestWordStr="";
-    bestClear=0; lettersCleared=0; totalDrops=0; letterCounts={}; dirStats={lr:0,rl:0,td:0,bu:0};
+    bestClear=0; lettersCleared=0; totalDrops=0; peakFill=0; letterCounts={}; dirStats={lr:0,rl:0,td:0,bu:0};
   }
 
   const VOWELS="AEIOU";
@@ -1917,9 +1981,7 @@
     // sandbox board. Capped at the board's vertical budget so the stage itself never overflows.
     { const sl=$("statsLeft"), sr=$("statsRight");
       [sl,sr].forEach(p=>{ if(!p) return;
-        p.style.height="auto";                 // measure natural content height
-        const need=p.scrollHeight||0;
-        p.style.height=Math.min(maxBoardH, Math.max(h+2, need))+"px";
+        p.style.height=Math.min(maxBoardH, h+2)+"px";   // mirror the board height; the ledger scrolls inside
       });
     }
     fx.width=w*devicePixelRatio; fx.height=h*devicePixelRatio;
@@ -1947,10 +2009,16 @@
   //  LETTERS
   // ============================================================
   function rand(n){return (Math.random()*n)|0;}
+  function renderRestrictedLetters(){          // show the letters the player removed on the start screen
+    const el=document.getElementById("rlList"); if(!el) return;
+    const arr=[...excluded].sort();
+    el.innerHTML = arr.length ? arr.map(L=>'<span class="rlchip">'+L+'</span>').join("") : '<span class="rlnone">none</span>';
+  }
   function rebuildBag(){
     activeBag = BAG.split("").filter(ch=>!excluded.has(ch)).join("");
     activeVowels = VOWELS.split("").filter(ch=>!excluded.has(ch)).join("");
     if(!activeBag) activeBag = BAG;     // safety: never spawn from an empty bag
+    renderRestrictedLetters();
   }
   function chooseLetter(){
     const bag = activeBag.length ? activeBag : BAG;
@@ -2051,6 +2119,7 @@
     else if(agEmitter.side==="left"){   x=0;    y=agEmitter.idx*cell; vx=spd;  vy=drift(); }
     else {                              x=maxX; y=agEmitter.idx*cell; vx=-spd; vy=drift(); }
     active={ ag:true, letter:nextLetter, x, y, vx, vy };
+    if(brickedOn && Math.random()<0.20){ active.letter=OBSTACLE; active.sentinel=true; }   // Bricked: surprise sentinel
     agPieceDeadline = (AG_TIMER[agTimerIdx]>0) ? (performance.now()+AG_TIMER[agTimerIdx]*1000) : 0;
     nextLetter=chooseLetter();
     paintNextChip();
@@ -2136,7 +2205,7 @@
     const spot=nearestEmpty(tr,tc);
     if(!spot){ gameOver("The board flooded with letters."); return; }
     const L=active.letter;
-    grid[spot.r][spot.c]=L; totalDrops++; letterCounts[L]=(letterCounts[L]||0)+1;
+    grid[spot.r][spot.c]=L; if(L!==OBSTACLE&&L!==BLACKHOLE){ totalDrops++; letterCounts[L]=(letterCounts[L]||0)+1; }
     lockedSet.add(spot.r+","+spot.c);            // permanent floating brick (gravity-immune)
     markLockFlash([spot.r+","+spot.c]);
     lastDrop={r:spot.r,c:spot.c};
@@ -2155,8 +2224,9 @@
             : (randomSpawn ? rand(COLS) : ((spawnCol==null) ? (COLS>>1) : Math.max(0, Math.min(COLS-1, spawnCol))));
     if(cascadeMode) highlightSpawnPip(col);
     // a brick can't enter a column already full to the top → game over (no rerouting to a new column)
-    if(grid[0][col]!=null){ gameOver("A column stacked to the ceiling."); return; }
+    if(grid[0][col]!=null){ let _alt=-1; for(let _cc=0;_cc<COLS;_cc++){ if(grid[0][_cc]==null){ _alt=_cc; break; } } if(_alt>=0) col=_alt; else { gameOver("A column stacked to the ceiling."); return; } }
     active={col, letter:nextLetter, y:-cell*0.9};
+    if(brickedOn && Math.random()<0.20){ active.letter=OBSTACLE; active.sentinel=true; }   // Bricked: surprise sentinel
     nextLetter=chooseLetterBiased();
     paintNextChip();
     renderActive();
@@ -2301,9 +2371,63 @@
     t.appendChild(g);
     return t;
   }
+  // Misspell: find runs of letters that aren't a word themselves but ARE an anagram of one (e.g. GAURD -> GUARD).
+  function misspellRuns(){
+    if(!misspellOn || ANAGRAMS.size===0) return [];
+    const runs=[], MIN=Math.max(2, MINLEN);   // track misspells at the mode's shortest-word length (3, 4, ...)
+    const scan=(cells,horiz)=>{ let best=null;
+      for(let a=0;a<cells.length;a++)for(let b=a+MIN;b<=cells.length;b++){
+        const seg=cells.slice(a,b), w=seg.map(x=>x.ch).join("");
+        if(!DICT.has(w) && ANAGRAMS.has(msig(w)) && (!best||seg.length>best.seg.length)) best={seg,w}; }
+      if(best) runs.push({ seg:best.seg, words:(SIG2WORD.get(msig(best.w))||[best.w]), horiz }); };
+    for(let r=0;r<ROWS;r++){ let run=[]; for(let c=0;c<COLS;c++){ const ch=grid[r][c];
+      if(ch!=null&&ch>="A"&&ch<="Z") run.push({r,c,ch}); else { if(run.length)scan(run,true); run=[]; } } if(run.length)scan(run,true); }
+    for(let c=0;c<COLS;c++){ let run=[]; for(let r=0;r<ROWS;r++){ const ch=grid[r][c];
+      if(ch!=null&&ch>="A"&&ch<="Z") run.push({r,c,ch}); else { if(run.length)scan(run,false); run=[]; } } if(run.length)scan(run,false); }
+    return runs;
+  }
+  function misspellCells(){ const rs=misspellRuns(); if(!rs.length) return null;
+    const out=new Set(); rs.forEach(r=>r.seg.forEach(x=>out.add(x.r+","+x.c))); return out; }
+  let _missChips=new Map();       // key -> live chip element (stays until the player clicks it)
+  let _missDismissed=new Set();   // keys clicked away; cleared once that misspell is fixed, so it can teach again
+  function popMisspellChips(){
+    if(!misspellOn){ _missChips.forEach(c=>{ if(c&&c.parentNode) c.remove(); }); _missChips.clear(); return; }
+    const rs=misspellRuns();
+    const wrap=document.getElementById("boardWrap"); const host=wrap||board; if(!host) return;
+    const ox=wrap?board.offsetLeft:0, oy=wrap?board.offsetTop:0;
+    const info=rs.map(run=>{ const seg=run.seg; let minR=99,maxR=-1,minC=99,maxC=-1;
+      seg.forEach(x=>{ if(x.r<minR)minR=x.r; if(x.r>maxR)maxR=x.r; if(x.c<minC)minC=x.c; if(x.c>maxC)maxC=x.c; });
+      const bad=seg.map(x=>x.ch).join("");
+      return { key:bad+"@"+minR+","+minC, words:run.words, bad, minR,maxR,minC,maxC }; });
+    const cur=new Set(info.map(i=>i.key));
+    for(const [k,chip] of _missChips){ if(!cur.has(k)){ if(chip&&chip.parentNode) chip.remove(); _missChips.delete(k); } }   // bricks gone -> remove the pill
+    for(const k of _missDismissed){ if(!cur.has(k)) _missDismissed.delete(k); }   // fixed -> allow it to teach again
+    info.forEach(i=>{
+      if(_missChips.has(i.key) || _missDismissed.has(i.key)) return;
+      const cx=((i.minC+i.maxC+1)/2)*cell + ox;
+      const chip=document.createElement("div"); chip.className="misspill"; chip.title="Click to dismiss";
+      const show=i.words.slice(0,8);
+      const parts=show.map(w=>{ let h=""; for(let n=0;n<w.length;n++){ const diff=(i.bad[n]!==w[n]); h+='<span'+(diff?' class="mv"':'')+'>'+w[n]+'</span>'; } return h; });
+      let inner=parts.join('<span class="msep">|</span>');
+      if(i.words.length>8) inner+='<span class="msep">|</span><span class="mmore">+'+(i.words.length-8)+'</span>';
+      chip.innerHTML=inner+'<span class="mx">\u2715</span>';
+      chip.style.left=cx+"px";
+      if(i.minR<=0){ chip.classList.add("below"); chip.style.top=((i.maxR+1)*cell + oy)+"px"; }
+      else chip.style.top=(i.minR*cell + oy)+"px";
+      chip.addEventListener("click",()=>{ if(chip.parentNode) chip.remove(); _missChips.delete(i.key); _missDismissed.add(i.key); });
+      host.appendChild(chip); _missChips.set(i.key, chip);
+    });
+  }
+  function reopenMisspell(r,c){
+    misspellRuns().forEach(run=>{ if(run.seg.some(x=>x.r===r&&x.c===c)){
+      let minR=99,minC=99; run.seg.forEach(x=>{ if(x.r<minR)minR=x.r; if(x.c<minC)minC=x.c; });
+      _missDismissed.delete(run.seg.map(x=>x.ch).join("")+"@"+minR+","+minC); } });
+    popMisspellChips();
+  }
   function renderStack(clearingSet){
     stackEl.innerHTML="";
     const redCells = restricted.size ? restrictedCells() : null;
+    const missCells = misspellOn ? misspellCells() : null;
     for(let r=0;r<ROWS;r++){
       for(let c=0;c<COLS;c++){
         const ch=grid[r][c];
@@ -2313,13 +2437,18 @@
         const key=r+","+c;
         const clearing = clearingSet && clearingSet.has(key);
         if(clearing) continue;   // cleared brick flies off as spinning debris instead of popping in place
-        const lk = lockedSet.has(key);
+        const lk = false;   // locked bricks (shift-lock, floats, AG) keep the normal blue tile look, no orange
         const red = redCells && redCells.has(key);
         const pop = popCells && popCells.has(key);
-        stackEl.appendChild(makeTile((clearing?"clearing":"rest")+(lk?" locked":"")+(red?" restricted":"")+(pop?" pop":""), ch, c, r));
+        const _mt=makeTile((clearing?"clearing":"rest")+(lk?" locked":"")+(red?" restricted":"")+(pop?" pop":""), ch, c, r);
+        if(missCells && missCells.has(key)){ const gl=_mt.querySelector(".glyph"); if(gl) gl.classList.add("misspell");
+          _mt.style.pointerEvents="auto"; _mt.style.cursor="pointer"; _mt.title="Click to show the correction";
+          const _rr=r,_cc=c; _mt.addEventListener("click",e=>{ e.stopPropagation(); reopenMisspell(_rr,_cc); }); }
+        stackEl.appendChild(_mt);
       }
     }
     updateDanger();
+    if(misspellOn) popMisspellChips(); else if(_missChips.size) popMisspellChips();
   }
   function sentenceHasLetter(L){
     if(!sentTargets.length || !L) return false;
@@ -2337,11 +2466,11 @@
     activeEl.innerHTML="";
     if(!active) return;
     const inset=tileInset(), size=cell-inset*2;
-    const glow = (deleteFxOn && score>=2 && !active.ag) ? " candelete" : "";
+    const glow = (deleteFxOn && score>=2 && !active.ag && !active.sentinel) ? " candelete" : "";
     const t=document.createElement("div");
-    t.className="tile active"+glow; t.id="activeTile";
+    t.className="tile active"+glow+(active.sentinel?" obstacle":""); t.id="activeTile";
     t.style.width=size+"px"; t.style.height=size+"px"; t.style.fontSize=tileFont();
-    const g=document.createElement("span"); g.className="glyph"; g.textContent=active.letter;
+    const g=document.createElement("span"); g.className="glyph"; g.textContent=active.sentinel?"":active.letter;
     t.appendChild(g);
     activeEl.appendChild(t);
     if(sentDotsOn && sentenceHasLetter(active.letter)) addSentMarks(t);
@@ -2355,6 +2484,54 @@
       if(sentDotsOn && sentenceHasLetter(active.mate.letter)) addSentMarks(t2);
     }
     positionActive();
+  }
+  let _buzzTiles=[];
+  function updateWordAnticipation(){          // bricks that would complete a word buzz harder as the letter nears
+    if(_buzzTiles.length){ _buzzTiles.forEach(t=>{ t.style.transform=""; t.style.boxShadow=""; t.style.filter=""; }); _buzzTiles=[]; }
+    if(!active || state!=="play" || resolving || active.letter===OBSTACLE || active.letter===BLACKHOLE) return;
+    const ins=tileInset();
+    let pr=-1, pc=active.col, prox=0;
+    if(active.ag){
+      const tr=Math.max(0,Math.min(ROWS-1,Math.floor((active.y+cell/2)/cell)));
+      const tc=Math.max(0,Math.min(COLS-1,Math.floor((active.x+cell/2)/cell)));
+      if(grid[tr] && grid[tr][tc]==null){ pr=tr; pc=tc; prox=1; }
+    } else {
+      pr=landingRow();
+      if(pr>=0){ const landTop=pr*cell; prox=Math.max(0, Math.min(1, 1-(landTop-active.y)/(4*cell))); }
+    }
+    if(pr<0||pc<0||pr>=ROWS||pc>=COLS||!grid[pr]||grid[pr][pc]!=null||prox<=0.02) return;
+    grid[pr][pc]=active.letter;
+    const words=wordsThroughCell(pr,pc);
+    grid[pr][pc]=null;
+    if(!words.length) return;
+    const cells=new Set();
+    words.forEach(w=>w.forEach(p=>{ if(!(p.r===pr&&p.c===pc)) cells.add(p.r+","+p.c); }));
+    if(!cells.size) return;
+    const map={}, st=document.getElementById("stack");
+    if(st) for(const t of st.children){ const c=Math.round((parseFloat(t.style.left)-ins)/cell), r=Math.round((parseFloat(t.style.top)-ins)/cell); map[r+","+c]=t; }
+    const amp=0.4+prox*2.6, rot=prox*4;
+    const H=(15+prox*42).toFixed(0), L=(52+prox*20).toFixed(0);   // 15deg orange-red -> 57deg yellow, brighter as hotter
+    cells.forEach(k=>{ const t=map[k]; if(t){ const rx=(Math.random()*2-1)*amp, ry=(Math.random()*2-1)*amp, rr=(Math.random()*2-1)*rot;
+      t.style.transform="translate("+rx.toFixed(1)+"px,"+ry.toFixed(1)+"px) rotate("+rr.toFixed(1)+"deg)";
+      t.style.boxShadow="inset 0 0 "+(5+prox*16).toFixed(0)+"px "+(2+prox*5).toFixed(0)+"px hsla("+H+",100%,"+L+"%,"+(prox*0.9).toFixed(2)+"), 0 0 "+(prox*22).toFixed(0)+"px hsla("+H+",100%,56%,"+(prox*0.72).toFixed(2)+")";
+      t.style.filter=prox>0.04?("brightness("+(1+prox*0.55).toFixed(2)+") saturate("+(1+prox*0.8).toFixed(2)+")"):"";
+      _buzzTiles.push(t); } });
+  }
+  function updateLandHint(){
+    let host=document.getElementById("landHint");
+    if(!host){ if(!board) return; host=document.createElement("div"); host.id="landHint";
+      host.style.cssText="position:absolute;inset:0;pointer-events:none;z-index:3;"; board.appendChild(host); }
+    host.innerHTML="";
+    if(!active || state!=="play" || resolving || active.ag || gameMode==="antigrav") return;   // no landing predictor in Anti-Gravity
+    const ins=tileInset(), sz=cell-ins*2, cells=[];
+    { const pr=landingRow();
+      if(pr>=0){ cells.push([pr,active.col,active.letter]); if(active.mate) cells.push([pr+active.mate.dr, active.col+active.mate.dc, active.mate.letter]); }
+    }
+    cells.forEach(a=>{ const r=a[0],c=a[1],L=a[2]; if(r<0||r>=ROWS||c<0||c>=COLS) return;
+      const d=document.createElement("div"); d.className="landcell";
+      d.style.left=(c*cell+ins)+"px"; d.style.top=(r*cell+ins)+"px"; d.style.width=sz+"px"; d.style.height=sz+"px";
+      if(letterPreviewOn && L && L!==OBSTACLE && L!==BLACKHOLE){ d.style.fontSize=tileFont(); d.innerHTML='<span class="lpv">'+L+'</span>'; }
+      host.appendChild(d); });
   }
   function positionActive(){
     const t=$("activeTile"); if(!t||!active) return;
@@ -2729,7 +2906,7 @@
       const found=collectClears();
       if(found.cells.size===0) break;
       cleared+=found.cells.size;
-      found.cells.forEach(key=>{ const [rr,cc]=key.split(",").map(Number); grid[rr][cc]=null; lockedSet.delete(key); clearFeed.push(key); }); if(bhPower>0) popRandomHole();
+      found.cells.forEach(key=>{ const [rr,cc]=key.split(",").map(Number); grid[rr][cc]=null; lockedSet.delete(key); clearFeed.push(key); }); if(bhPower>0) popRandomHole(); if(brickedOn) popSentinels(found.words?found.words.length:1);
       applyGravity();
     }
     if(cleared){ renderStack(); updateDanger(); toast(cleared+" tile"+(cleared>1?"s":"")+" cleared"); }
@@ -2746,7 +2923,7 @@
     for(const [dr,dc,L] of cells){
       const r=pr+dr, c=active.col+dc;
       if(r<0||r>=ROWS||c<0||c>=COLS||grid[r][c]!=null) continue;
-      grid[r][c]=L; totalDrops++; letterCounts[L]=(letterCounts[L]||0)+1; last={r,c}; flk.push(r+","+c);
+      grid[r][c]=L; if(L===OBSTACLE||L===BLACKHOLE){ lockedSet.add(r+","+c); } else { totalDrops++; letterCounts[L]=(letterCounts[L]||0)+1; } last={r,c}; flk.push(r+","+c);
     }
     lastDrop=last; markLockFlash(flk);
     active=null;
@@ -2801,7 +2978,7 @@
       resolving=false;
       renderStack();
       // a column has stacked to the very top → top out (no rerouting)
-      if(gameMode!=="antigrav"){ for(let c=0;c<COLS;c++){ if(grid[0][c]!=null){ gameOver("A column stacked to the ceiling."); return; } } }
+      if(gameMode!=="antigrav"){ for(let c=0;c<COLS;c++){ if(grid[0][c]!=null && grid[0][c]!==OBSTACLE && grid[0][c]!==BLACKHOLE){ gameOver("A column stacked to the ceiling."); return; } } }
       // earned a backwards-word bonus? pause and let the player delete bricks (skipped for the AI)
       if(_bonusArm>0 && !demoOn && !bonusActive && state==="play"){ const n=_bonusArm; _bonusArm=0; enterBonus(n); return; }
       _bonusArm=0;
@@ -2863,7 +3040,7 @@
     // after the pop, remove + gravity + recurse
     _chainTimer=setTimeout(()=>{
       _chainTimer=0;
-      found.cells.forEach(key=>{ const [rr,cc]=key.split(",").map(Number); grid[rr][cc]=null; lockedSet.delete(key); clearFeed.push(key); }); if(bhPower>0) popRandomHole();
+      found.cells.forEach(key=>{ const [rr,cc]=key.split(",").map(Number); grid[rr][cc]=null; lockedSet.delete(key); clearFeed.push(key); }); if(bhPower>0) popRandomHole(); if(brickedOn) popSentinels(found.words?found.words.length:1);
       applyGravity();
       renderStack();
       resolveBoard(true);           // chain continues the streak
@@ -2914,6 +3091,7 @@
   function bonusDelete(r,c){
     if(!bonusActive || bonusLeft<=0) return;
     if(r<0||r>=ROWS||c<0||c>=COLS || grid[r][c]==null) return;
+    if(grid[r][c]===OBSTACLE || grid[r][c]===BLACKHOLE){ try{ showFlash("Sentinels can't be deleted"); }catch(_){} return; }   // immovable blocks are safe from the bonus delete
     const key=r+","+c, hue=140+rand(80);
     spawnDebris(new Set([key]));                 // reuse the tumble-off animation (reads the letter first)
     burst(c, r, "hsla("+hue+",90%,68%,", 8);
@@ -2927,7 +3105,7 @@
     showBonusBanner(false);
     bonusActive=false; resolving=false;
     // resume: spawn the piece we deferred when the bonus began
-    if(gameMode!=="antigrav"){ for(let c=0;c<COLS;c++){ if(grid[0][c]!=null){ gameOver("A column stacked to the ceiling."); return; } } }
+    if(gameMode!=="antigrav"){ for(let c=0;c<COLS;c++){ if(grid[0][c]!=null && grid[0][c]!==OBSTACLE && grid[0][c]!==BLACKHOLE){ gameOver("A column stacked to the ceiling."); return; } } }
     spawn();
   }
 
@@ -3205,6 +3383,27 @@
           applyGravity();
           if(grid[r][c0+len]!==BLACKHOLE) return "black hole moved or vanished under gravity";
           return true;
+        } },
+      { name:"misspell flags near-words at multiple lengths", group:"MISSPELL  \u00b7  seed "+bitSeed,
+        desc:"across shortest-word settings of 3, 4 and 5, a scramble of a real word is flagged red while the real word and gibberish are not",
+        fn:()=>{
+          if(ANAGRAMS.size===0) return true;
+          for(const L of [3,4,5]){
+            MINLEN=L;
+            let W,g=0; do{ W=randWord(L); g++; }while(W.length!==L && g<200); if(W.length!==L) continue;
+            let sc=W,g2=0; do{ sc=W.split("").sort(()=>rng()-0.5).join(""); g2++; }while((sc===W||DICT.has(sc))&&g2<200);
+            if(sc===W||DICT.has(sc)) continue;   // no non-word scramble at this length; skip it
+            const r=3, c0=1; mkBoard(6, L+2);
+            const prev=misspellOn; misspellOn=true;
+            for(let k=0;k<L;k++) grid[r][c0+k]=sc[k];
+            const m1=misspellCells(); const flagged=!!(m1 && m1.has(r+","+c0));
+            for(let k=0;k<L;k++) grid[r][c0+k]=W[k];
+            const m2=misspellCells(); const validFlagged=!!(m2 && m2.has(r+","+c0));
+            misspellOn=prev;
+            if(!flagged) return "length "+L+": scramble not flagged ("+sc+" from "+W+")";
+            if(validFlagged) return "length "+L+": correct word wrongly flagged ("+W+")";
+          }
+          return true;
         } }
     ];
     const _mlSuite=MINLEN;   // baseline — several checks set MINLEN for their own board; reset before each so none leaks into the next
@@ -3408,6 +3607,7 @@
     let _obs=0,_holes=0; for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ const v=grid[r][c]; if(v===OBSTACLE)_obs++; else if(v===BLACKHOLE)_holes++; }
     row(dangerPct>=75?"warn":"", "fill "+fillPct+"% · danger "+dangerPct+"% · tallest "+tallest+" · empty "+(total-filled)+" · locked "+lockedSet.size);
     row("dim", "obstacles "+_obs+" · black holes "+_holes+" · pull "+(bhPower===0?"off":bhPower===1?"contact":"1-cell"));
+    { const mr=misspellOn?misspellRuns().length:0; row("dim", "misspell "+(misspellOn?"on":"off")+" · runs "+mr+" · chips "+_missChips.size+" · dismissed "+_missDismissed.size+" · minlen "+Math.max(2,MINLEN)+" · anagrams "+ANAGRAMS.size); }
     row("", COLS+"\u00d7"+ROWS+" · minlen "+MINLEN+" · dict "+DICT.size+" · bag "+activeBag.length+" letters"+(excluded.size?(" · excluded "+[...excluded].join("")):""));
 
     // ---- RESTRICTED ----
@@ -4096,6 +4296,9 @@
     set("stMult", "\u00d7"+curMult.toFixed(1).replace(/\.0$/,""));
     set("stTut", tutorHints.length);
     set("stDict", DICT.size.toLocaleString());
+    set("stEff", totalDrops>0 ? (score/totalDrops).toFixed(1) : "0");                 // scoring efficiency
+    { let occ=0; for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++) if(grid[r][c]!=null) occ++;
+      const fp=Math.round(occ/(ROWS*COLS)*100); if(fp>peakFill) peakFill=fp; set("stPeak", peakFill+"%"); }   // board-pressure high-water mark
 
     // four-direction compass
     set("stLR", dirStats.lr); set("stRL", dirStats.rl);
@@ -4111,7 +4314,7 @@
     if(realDt>maxFrame) maxFrame=realDt;
     if(realDt>120 && state==="play"){ longFrames++; logEvent("JANK", Math.round(realDt)+"ms frame"); }
     try{
-      drawDepth(dt); drawFx(dt); drawHeat(now); drawSmoke(dt); stepDebris(dt); drawBolts(now); drawSparks(now); drawTutor(now); updateMonitor(now); updateStats(now); updateAgClock(now);
+      drawDepth(dt); drawFx(dt); drawHeat(now); drawSmoke(dt); stepDebris(dt); drawBolts(now); drawSparks(now); drawTutor(now); updateMonitor(now); updateStats(now); updateAgClock(now); updateLandHint(); updateWordAnticipation();
       if(thunderstormOn && state==="play" && now>=_nextStormT){ ambientStrike(); _nextStormT=now+1400+Math.random()*2600; } // ambient thunderstorm
       if(state!=="play"||!active||resolving) return;
       if(active.ag){ agStep(dt);
@@ -4209,7 +4412,7 @@
     else if(e.key==="Enter"){ if(!e.repeat) rotate(); }
     else if(e.key==="+"||e.key==="=") changeSpeed(1);
     else if(e.key==="-"||e.key==="_") changeSpeed(-1);
-    else if(e.key==="`"){ debugOn=!debugOn; showFlash("Debug "+(debugOn?"On":"Off")); { const gb=$("guideBook"); if(gb) gb.style.display=(debugOn||_sbxDebugOn)?"block":"none"; } }
+    else if(e.key==="`"){ debugOn=!debugOn; showFlash("Debug "+(debugOn?"On":"Off")); { const gb=$("guideBook"); if(gb) gb.style.display=(debugOn)?"block":"none"; } }
     else if(!e.shiftKey && /^[a-z]$/i.test(e.key)) forceNextLetter(e.key.toUpperCase());
   });
   document.addEventListener("keyup",(e)=>{ if(e.key==="ArrowDown") setSoft(false); if(e.key==="ArrowUp") setSlow(false); if(e.key==="ArrowLeft"||e.key==="ArrowRight"){ heldArrows[e.key]=false; deleteFired=false; } });
@@ -4267,6 +4470,9 @@
   $("bThunder").addEventListener("click",toggleThunder);
   $("bSmoke").addEventListener("click",toggleSmoke);
   { const jb=$("bJumble"); if(jb) jb.addEventListener("click",doJumble); }
+  { const bk=$("bBricked"); if(bk) bk.addEventListener("click",()=>{ brickedOn=!brickedOn; bk.textContent="Bricked: "+(brickedOn?"On":"Off"); bk.classList.toggle("on",brickedOn); }); }
+  { const lp=$("bLetterPrev"); if(lp) lp.addEventListener("click",()=>{ letterPreviewOn=!letterPreviewOn; lp.textContent="Letter Preview: "+(letterPreviewOn?"On":"Off"); lp.classList.toggle("on",letterPreviewOn); }); }
+  { const bm=$("bMisspell"); if(bm) bm.addEventListener("click",()=>{ misspellOn=!misspellOn; bm.textContent="Misspell: "+(misspellOn?"On":"Off"); bm.classList.toggle("on",misspellOn); try{ renderStack(); }catch(_){} }); }
   { const bs=$("bSpark"); if(bs) bs.addEventListener("click",toggleSpark); }
   { const bb=$("bBlocks"); if(bb) bb.addEventListener("click",spawnObstacles); }
   { const bh=$("bHoles"); if(bh) bh.addEventListener("click",spawnBlackHoles); }
@@ -4380,7 +4586,7 @@
   // catch the sandbox lockup in the act: whatever throws in the loop lands in lastError and shows here.
   function updateSbxDebug(){
     const el=$("sbxDebug"); if(!el) return;
-    { const gb=$("guideBook"); if(gb) gb.style.display=(debugOn||_sbxDebugOn)?"block":"none"; }
+    { const gb=$("guideBook"); if(gb) gb.style.display=(debugOn)?"block":"none"; }
     if(!_sbxDebugOn){ el.style.display="none"; return; }
     el.style.display="block";
     const e=lastError;
@@ -4393,6 +4599,7 @@
       "board="+COLS+"x"+ROWS+"   spawnCol="+spawnCol+"   autolock="+dl+"\n";
     { let _obs=0,_holes=0; for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ const v=grid[r][c]; if(v===OBSTACLE)_obs++; else if(v===BLACKHOLE)_holes++; }
       s+="obstacles="+_obs+"   holes="+_holes+"   bhPull="+(bhPower===0?"off":bhPower===1?"contact":"1cell")+"\n"; }
+    { const mr=misspellOn?misspellRuns().length:0; s+="misspell="+(misspellOn?"on":"off")+"   runs="+mr+"   chips="+_missChips.size+"   dismissed="+_missDismissed.size+"\n"; }
     if(e){ s+="\u26a0 LAST ERROR ["+e.kind+"] +"+e.t+"ms\n"+e.msg+"\n"+((e.stack||"").split("\n")[0]||""); }
     else { s+="\u2713 no errors captured"; }
     el.textContent=s;
@@ -4545,6 +4752,43 @@
   // Fully self-contained: injects its own style + overlay + button. Touches no core state
   // (reads ROWS/COLS at open only). Lets you burn a pattern, save/export/import/load it.
   // ===================== FIELD GUIDE (right-side booklet, mirrors the debug HUD) =====================
+  // ===================== DEV PERFORMANCE HUD (centered, above the board) =====================
+  (function perfHud(){
+    const css=`
+    #boardCol{position:relative;}
+    #perfHud{display:none;position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:6px;z-index:8;width:max-content;max-width:94vw;
+      font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;letter-spacing:.3px;color:#9be7ff;
+      background:rgba(6,12,26,.85);border:1px solid rgba(56,232,255,.4);border-radius:9px;padding:5px 12px;
+      box-shadow:0 6px 18px rgba(0,0,0,.4);white-space:nowrap;text-align:center;pointer-events:none;}
+    #perfHud b{color:#eaf6ff;font-weight:700;} #perfHud .sep{color:rgba(56,232,255,.4);margin:0 7px;}`;
+    const st=document.createElement("style"); st.textContent=css; document.head.appendChild(st);
+    const hud=document.createElement("div"); hud.id="perfHud";
+    const col=document.getElementById("boardCol"), wrap=document.getElementById("boardWrap");
+    if(col) col.appendChild(hud); else if(wrap&&wrap.parentNode) wrap.parentNode.insertBefore(hud, wrap); else document.body.appendChild(hud);
+    let on=false, frames=0, last=performance.now(), fps=0, ft=0, lo=999, hi=0;
+    const btn=document.createElement("button"); btn.className="btn"; btn.id="bPerf"; btn.textContent="Perf";
+    btn.dataset.tip="Show a live developer performance readout above the board \u2014 FPS, frame time, min/max FPS, memory, tiles, and DOM node count";
+    const anchor=document.getElementById("bJumble")||document.getElementById("bSmoke");
+    if(anchor&&anchor.parentNode) anchor.parentNode.insertBefore(btn, anchor.nextSibling); else document.body.appendChild(btn);
+    btn.addEventListener("click",()=>{ on=!on; hud.style.display=on?"block":"none"; btn.classList.toggle("on",on); if(on){ lo=999; hi=0; } });
+    function render(){
+      if(fps<lo) lo=fps; if(fps>hi) hi=fps;
+      try{ hud.style.marginBottom = (gameMode==="antigrav") ? "26px" : "6px"; }catch(_){}   // AG has a top emitter rail; clear it
+      let mem=""; try{ if(performance&&performance.memory){ const u=performance.memory.usedJSHeapSize/1048576, t=performance.memory.totalJSHeapSize/1048576, l=performance.memory.jsHeapSizeLimit/1048576;
+        mem='<span class="sep">|</span>mem <b>'+u.toFixed(0)+'</b>/'+t.toFixed(0)+' MB <span style="opacity:.6">(cap '+l.toFixed(0)+')</span>'; } }catch(_){}
+      let tiles=0; try{ const s=document.getElementById("stack"); if(s) tiles=s.childElementCount; }catch(_){}
+      let nodes=0; try{ nodes=document.getElementsByTagName("*").length; }catch(_){}
+      let jank=0, worst=0; try{ jank=longFrames||0; worst=Math.round(maxFrame||0); }catch(_){}   // frames over 120ms + worst frame
+      let fx=0; try{ const dl=document.getElementById("debrisLayer"); if(dl) fx=dl.childElementCount; }catch(_){}   // live effect particles
+      const col= fps>=50?"#7dffb0":fps>=30?"#ffd76a":"#ff8a8a";
+      hud.innerHTML='<span style="color:'+col+'">FPS <b>'+fps+'</b></span><span class="sep">|</span>frame <b>'+ft+'</b> ms<span class="sep">|</span>min/max <b>'+(lo===999?0:lo)+'</b>/<b>'+hi+'</b>'+mem+'<span class="sep">|</span>tiles <b>'+tiles+'</b><span class="sep">|</span>DOM <b>'+nodes+'</b><span class="sep">|</span>jank <b>'+jank+'</b> <span style="opacity:.6">('+worst+'ms)</span><span class="sep">|</span>fx <b>'+fx+'</b>';
+    }
+    function loop(now){ frames++; const dt=now-last;
+      if(dt>=500){ fps=Math.round(frames*1000/dt); ft=+(dt/frames).toFixed(1); frames=0; last=now; if(on) render(); }
+      requestAnimationFrame(loop); }
+    requestAnimationFrame(loop);
+  })();
+
   (function fieldGuide(){
     const css=`
     #guideBook{position:fixed;right:10px;top:10px;width:310px;max-height:86vh;z-index:120;display:none;
@@ -4572,7 +4816,7 @@
     gb.innerHTML=
       '<h3>\u25E7 Field Guide</h3>'+
       '<div class="gb-tag">Live reference \u2014 mirrors the debug readout on the left. Tap a topic to jump.</div>'+
-      '<div class="gb-nav"><a data-go="gDebug">Debug HUD</a><a data-go="gMonitor">Monitor</a><a data-go="gPanels">Stat panels</a><a data-go="gModes">Modes</a><a data-go="gToggles">Toggles</a><a data-go="gBlocks">Blocks &amp; Holes</a><a data-go="gDesign">Design</a><a data-go="gBit">BIT</a></div>'+
+      '<div class="gb-nav"><a data-go="gDebug">Debug HUD</a><a data-go="gMonitor">Monitor</a><a data-go="gPanels">Stat panels</a><a data-go="gModes">Modes</a><a data-go="gToggles">Toggles</a><a data-go="gBlocks">Blocks &amp; Holes</a><a data-go="gDesign">Design</a><a data-go="gMiss">Misspell</a><a data-go="gBit">BIT</a></div>'+
       '<h4 id="gDebug">Debug HUD (bottom-left) \u2014 field by field</h4>'+
       '<p>The panel opposite this one prints the engine\u2019s live internals:</p>'+
       '<div class="gb-row"><span class="k">mode</span> \u2014 active mode: classic, antigrav, or sandbox.</div>'+
@@ -4619,6 +4863,9 @@
       '<p><b>Black Holes</b> \u2014 3-tap cycle: <b>1)</b> holes appear (\u226410%); a brick that touches one is devoured with a redshift collapse. <b>2)</b> pull widens to 1 cell (falling bricks gravitate in). <b>3)</b> off. Each word you solve makes one random hole implode with a board shockwave.</p>'+
       '<h4 id="gDesign">Design targets (Main game only)</h4>'+
       '<p>Open <b>Design</b>, paint a shape, <b>Set target</b>. Its red outline appears on the board; spell words through those cells to fill them with green dots. Complete the shape for a reward (clear board or delete blocks). <b>Overlay</b> cycles: full \u2192 outline \u2192 dots \u2192 off.</p>'+
+      '<h4 id="gMiss">Misspell</h4>'+
+      '<p>Every dictionary word gets a signature made of its sorted letters (GUARD becomes ADGRU). With the toggle on, each run of bricks is checked: if the run is not a word but its signature matches one, the letters turn red and a jade chip pops above showing every correct spelling, joined by a bar. Letters that need to move animate to green. The chip stays until clicked; click any red letter to bring it back.</p>'+
+      '<p>Debug readouts: <span class="k">misspell</span> on/off · <span class="k">runs</span> misspelled words currently on the board · <span class="k">chips</span> correction chips showing · <span class="k">dismissed</span> chips clicked away · <span class="k">minlen</span> the shortest run length checked (follows the mode) · <span class="k">anagrams</span> signatures in the lookup.</p>'+
       '<h4 id="gBit">Built-In Test (BIT)</h4>'+
       '<p>From the home screen the BIT self-checks the engine (word detection, gravity, clears, tutor, obstacles, black holes) and reports pass/fail with a reproducible seed. Run 1\u201310 randomized passes at once. It saves and restores state, so it never touches a live game.</p>';
     document.body.appendChild(gb);
@@ -4675,16 +4922,24 @@
     #designHUD .dh-c{width:9px;height:9px;border-radius:2px;background:rgba(255,255,255,.06);}
     #designHUD .dh-c.on{background:linear-gradient(180deg,rgba(255,90,90,.95),rgba(200,30,30,.95));box-shadow:0 0 5px rgba(255,50,50,.7);}
     #designHUD .dh-c.done{background:#ff2a2a;box-shadow:0 0 7px rgba(255,40,40,.9);}
+    #sentinelHUD{position:fixed;left:14px;top:236px;z-index:19;background:linear-gradient(180deg,rgba(16,18,24,.95),rgba(8,9,13,.95));
+      border:1px solid rgba(150,160,180,.4);border-radius:12px;padding:10px 12px;font-family:var(--display);color:#d6dbe4;box-shadow:0 8px 22px rgba(0,0,0,.5);display:none;}
+    #sentinelHUD .sh-title{color:#aeb6c4;font-weight:800;margin-bottom:6px;font-size:12px;}
+    #sentinelHUD .sh-grid{display:grid;gap:2px;}
+    #sentinelHUD .sh-c{width:9px;height:9px;border-radius:2px;background:rgba(255,255,255,.06);}
+    #sentinelHUD .sh-c.on{background:linear-gradient(180deg,rgba(150,160,180,.95),rgba(90,98,115,.95));box-shadow:0 0 5px rgba(150,160,180,.5);}
     #designPanel .design-card,#designPanel .dsn-list,#rewardDlg .rew-card{scrollbar-width:none;-ms-overflow-style:none;}
     #designPanel .design-card::-webkit-scrollbar,#designPanel .dsn-list::-webkit-scrollbar,#rewardDlg .rew-card::-webkit-scrollbar{width:0;height:0;display:none;}`;
     const st=document.createElement("style"); st.textContent=css; document.head.appendChild(st);
     const ov=document.createElement("div"); ov.className="overlay hide"; ov.id="designPanel";
     ov.innerHTML='<div class="design-card"><h2>\u25C8 Design Studio</h2>'+
       '<div class="design-sub">Click cells to burn a pattern onto a copy of the board. Save it, export it, load it back. (Matching it in-play is coming next.)</div>'+
+      '<div id="dsnBuild" style="font-size:10px;letter-spacing:.4px;margin-bottom:9px;font-family:ui-monospace,Menlo,Consolas,monospace;"></div>'+
       '<div id="designGrid" class="design-grid"></div>'+
       '<input id="designName" class="design-name" placeholder="Name this design\u2026" maxlength="40">'+
-      '<div class="design-btns"><button id="dsnSave">Save</button><button id="dsnTarget">\u25C8 Set target</button><button id="dsnExport">Export</button>'+
-      '<button id="dsnImport">Import</button><button id="dsnClear" class="ghost">Clear</button>'+
+      '<div class="design-btns"><button id="dsnSave">Save</button><button id="dsnTarget">\u25C8 Set target</button><button id="dsnSentinel">\u25A0 Sentinel mode</button><button id="dsnExport">Export</button>'+
+      '<button id="dsnImport">Import</button><button id="dsnClear" class="ghost">Clear canvas</button>'+
+      '<button id="dsnClearBoard" class="ghost">\u2327 Clear board</button>'+
       '<button id="dsnClose" class="cta">Close</button>'+
       '<input type="file" id="dsnFile" accept=".json,application/json" style="display:none"></div>'+
       '<div id="dsnList" class="dsn-list"></div><div id="dsnMsg" class="design-msg"></div></div>';
@@ -4708,9 +4963,18 @@
         it.querySelector("span:first-child").addEventListener("click",()=>{ loadDesign(d); say("Loaded \u201c"+(d.name||"Untitled")+"\u201d"); });
         it.querySelector(".del").addEventListener("click",ev=>{ ev.stopPropagation(); const arr=allDesigns(); arr.splice(i,1); saveAll(arr); renderList(); });
         L.appendChild(it); }); }
+    let sentinelPaint=false, sentHudEl=null;
     ov.querySelector("#designGrid").addEventListener("click",e=>{ const t=e.target.closest(".dcell"); if(!t) return;
       const r=+t.dataset.r, c=+t.dataset.c; cells[r][c]=!cells[r][c]; t.classList.toggle("lit",cells[r][c]);
-      if(cells[r][c]){ const s=document.createElement("div"); s.className="dsmoke"; t.appendChild(s); setTimeout(()=>s.remove(),1000); } });
+      if(cells[r][c]){ const s=document.createElement("div"); s.className="dsmoke"; t.appendChild(s); setTimeout(()=>s.remove(),1000); }
+      if(sentinelPaint && Array.isArray(grid) && r<ROWS && c<COLS){   // paint immovable sentinels straight onto the board
+        if(cells[r][c]){ if(grid[r][c]==null){ grid[r][c]=OBSTACLE; lockedSet.add(r+","+c); paintedSentinels.add(r+","+c); } }
+        else if(grid[r][c]===OBSTACLE){ grid[r][c]=null; lockedSet.delete(r+","+c); paintedSentinels.delete(r+","+c); }
+        try{ renderStack(); }catch(_){}
+      } });
+    { const sb=document.getElementById("dsnSentinel");
+      if(sb) sb.addEventListener("click",()=>{ sentinelPaint=!sentinelPaint; sb.classList.toggle("cta",sentinelPaint);
+        say(sentinelPaint?"Sentinel mode ON \u2014 painted cells drop immovable blocks onto the board":"Sentinel mode off"); }); }
     D("dsnSave").addEventListener("click",()=>{ const d=curDesign(); if(!d.cells.length){ say("Burn some cells first."); return; }
       const a=allDesigns(); const ex=a.findIndex(x=>x.name===d.name); if(ex>=0) a[ex]=d; else a.push(d); saveAll(a); renderList(); say("Saved \u201c"+d.name+"\u201d"); });
     D("dsnExport").addEventListener("click",()=>{ const d=curDesign(); const b=new Blob([JSON.stringify(d,null,2)],{type:"application/json"});
@@ -4719,6 +4983,25 @@
     D("dsnFile").addEventListener("change",e=>{ const f=e.target.files[0]; if(!f) return; const rd=new FileReader();
       rd.onload=()=>{ try{ loadDesign(JSON.parse(rd.result)); say("Imported."); }catch(_){ say("Bad file."); } }; rd.readAsText(f); e.target.value=""; });
     D("dsnClear").addEventListener("click",()=>{ cells=Array.from({length:dR},()=>Array(dC).fill(false)); renderGrid(); say("Cleared."); });
+    D("dsnClearBoard").addEventListener("click",()=>{
+      paintedSentinels.forEach(k=>{ const a=k.split(",").map(Number); if(grid[a[0]]&&grid[a[0]][a[1]]===OBSTACLE){ grid[a[0]][a[1]]=null; lockedSet.delete(k); } });
+      paintedSentinels.clear();
+      activeDesign=null; solved=new Set();
+      try{ renderStack(); }catch(_){}
+      say("Cleared sentinels and the design target from the board.");
+    });
+    function renderSentinelHUD(){
+      if(!sentHudEl){ sentHudEl=document.createElement("div"); sentHudEl.id="sentinelHUD"; document.body.appendChild(sentHudEl); }
+      if(!sentinelPaint || paintedSentinels.size===0){ sentHudEl.style.display="none"; return; }
+      sentHudEl.style.display="block";
+      const pts=[...paintedSentinels].map(k=>k.split(",").map(Number));
+      const rs=pts.map(p=>p[0]), cs=pts.map(p=>p[1]);
+      const mr=Math.min.apply(null,rs), mc=Math.min.apply(null,cs), H=Math.max.apply(null,rs)-mr+1, W=Math.max.apply(null,cs)-mc+1;
+      const S=new Set(pts.map(p=>(p[0]-mr)+","+(p[1]-mc)));
+      let h='<div class="sh-title">\u25A0 Sentinels \u00b7 '+paintedSentinels.size+'</div><div class="sh-grid" style="grid-template-columns:repeat('+W+',9px)">';
+      for(let r=0;r<H;r++)for(let c=0;c<W;c++) h+='<div class="sh-c'+(S.has(r+","+c)?" on":"")+'"></div>';
+      sentHudEl.innerHTML=h+'</div>';
+    }
     D("dsnClose").addEventListener("click",()=>ov.classList.add("hide"));
     // ---- Phase 2: set a design as the in-play target, watch for it, reward on match ----
     let activeDesign=null, dialogOpen=false, _prevState=null, solved=new Set();
@@ -4754,7 +5037,7 @@
     const boardEl=document.getElementById("board"); let stencilEl=null, hudEl=null;
     function classicW7(){ return (typeof gameMode==="undefined"||gameMode==="classic") && (typeof COLS==="undefined"||COLS===7); }
     function renderStencil(){ if(!boardEl) return; if(!stencilEl){ stencilEl=document.createElement("div"); stencilEl.id="designStencil"; (document.getElementById("boardWrap")||boardEl).appendChild(stencilEl); }
-      stencilEl.innerHTML=""; if(dsnView>=2 || !(activeDesign&&classicW7()&&(state==="play"||state==="pause"))) return;
+      stencilEl.innerHTML=""; if(sentinelPaint || dsnView>=2 || !(activeDesign&&classicW7()&&(state==="play"||state==="pause"))) return;
       const abs=activeDesign.abs||[], S=new Set(abs.map(p=>p[0]+","+p[1])), bd="2px solid rgba(255,66,66,.92)";
       const ox=boardEl.offsetLeft+1, oy=boardEl.offsetTop+1;   // align with the board's content (bricks/fill)
       abs.forEach(p=>{ const r=p[0],c=p[1]; if(c>=COLS||(grid&&r>=grid.length)) return;
@@ -4763,7 +5046,7 @@
         if(!S.has(r+","+(c-1))) d.style.borderLeft=bd; if(!S.has(r+","+(c+1))) d.style.borderRight=bd;
         stencilEl.appendChild(d); }); }
     function renderHUD(){ if(!hudEl){ hudEl=document.createElement("div"); hudEl.id="designHUD"; document.body.appendChild(hudEl); }
-      if(!(activeDesign&&classicW7())){ hudEl.style.display="none"; return; } hudEl.style.display="block";
+      if(sentinelPaint || !(activeDesign&&classicW7())){ hudEl.style.display="none"; return; } hudEl.style.display="block";
       let h='<div class="dh-title">\u25C8 '+activeDesign.name+'</div><div class="dh-grid" style="grid-template-columns:repeat('+activeDesign.W+',9px)">';
       h='<div class="dh-title">\u25C8 '+activeDesign.name+' \u00b7 '+solved.size+'/'+activeDesign.abs.length+'</div><div class="dh-grid" style="grid-template-columns:repeat('+activeDesign.W+',9px)">';
       const rs=Math.min.apply(null,activeDesign.abs.map(p=>p[0])), cs=Math.min.apply(null,activeDesign.abs.map(p=>p[1]));
@@ -4772,10 +5055,10 @@
     let fillEl=null;
     function renderFill(){ const stk=document.getElementById("stack");   // sits INSIDE #board, BEFORE #stack -> behind the bricks
       if(!fillEl && boardEl){ fillEl=document.createElement("div"); fillEl.id="designFill"; if(stk) boardEl.insertBefore(fillEl,stk); else boardEl.appendChild(fillEl); }
-      if(!fillEl) return; fillEl.innerHTML=""; if(dsnView===1||dsnView===3 || !(activeDesign&&classicW7()&&(state==="play"||state==="pause"))) return;
+      if(!fillEl) return; fillEl.innerHTML=""; if(sentinelPaint || dsnView===1||dsnView===3 || !(activeDesign&&classicW7()&&(state==="play"||state==="pause"))) return;
       solved.forEach(k=>{ const a=k.split(",").map(Number), r=a[0], c=a[1]; if(c>=COLS||(grid&&r>=grid.length)) return;
         const d=document.createElement("div"); d.className="dfill"; d.style.left=(c*cell)+"px"; d.style.top=(r*cell)+"px"; d.style.width=cell+"px"; d.style.height=cell+"px"; fillEl.appendChild(d); }); }
-    setInterval(()=>{ renderStencil(); renderFill(); renderHUD();
+    setInterval(()=>{ renderStencil(); renderFill(); renderHUD(); renderSentinelHUD();
       if(openBtn) openBtn.style.display = classicW7() ? "" : "none";   // designer only in the main game
       if(dialogOpen||typeof state==="undefined"||state!=="play"||!activeDesign||!classicW7()){ clearFeed.length=0; return; }
       const dset=new Set(activeDesign.abs.map(p=>p[0]+","+p[1]));
@@ -4788,7 +5071,10 @@
     viewBtn.addEventListener("click",()=>{ dsnView=(dsnView+1)%4; viewBtn.textContent="Overlay: "+["Full","Outline","Dots","Off"][dsnView]; viewBtn.classList.toggle("on",dsnView>0); renderFill(); renderStencil(); });
     const anchor=document.getElementById("bHoles"); if(anchor&&anchor.parentNode) anchor.parentNode.insertBefore(openBtn, anchor.nextSibling); else document.body.appendChild(openBtn);
     if(openBtn.parentNode) openBtn.parentNode.insertBefore(viewBtn, openBtn.nextSibling); else document.body.appendChild(viewBtn);
-    openBtn.addEventListener("click",()=>{ buildGrid(); renderList(); ov.classList.remove("hide"); });
+    openBtn.addEventListener("click",()=>{ buildGrid(); renderList(); ov.classList.remove("hide");
+      const bb=D("dsnBuild"); if(bb){ const ids=[...ov.querySelectorAll(".design-btns button")].map(b=>b.id);
+        const ok=ids.includes("dsnClear")&&ids.includes("dsnClearBoard");
+        bb.innerHTML="BUILD CHECK \u00b7 "+ids.length+" buttons \u00b7 clear buttons: "+(ok?'<b style="color:#5fffa0">PRESENT \u2713 (BUILD 9)</b>':'<b style="color:#ff6a6a">MISSING \u2717 (OLD FILE)</b>'); } });
   })();
 
   (function wireSandbox(){
