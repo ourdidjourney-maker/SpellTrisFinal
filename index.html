@@ -2364,6 +2364,7 @@
     const inset=tileInset(), size=cell-inset*2;
     const t=document.createElement("div");
     t.className="tile "+kind;
+    t.dataset.r=row; t.dataset.c=col;
     t.style.left=(col*cell+inset)+"px";
     t.style.top=(row*cell+inset)+"px";
     t.style.width=size+"px"; t.style.height=size+"px";
@@ -2520,7 +2521,7 @@
     return {heat, word:bestWord, prox:bestProx};
   }
   function updateWordAnticipation(){          // bricks that would complete a word buzz harder as the letter nears
-    if(_buzzTiles.length){ _buzzTiles.forEach(t=>{ t.style.transform=""; t.style.boxShadow=""; t.style.filter=""; }); _buzzTiles=[]; }
+    if(_buzzTiles.length){ _buzzTiles.forEach(t=>{ t.style.transform=""; t.style.boxShadow=""; t.style.filter=""; const g=t.querySelector(".glyph"); if(g) g.style.color=""; }); _buzzTiles=[]; }
     _anticProx=0; _anticCells=0; _anticWord="";
     if(!active || state!=="play" || resolving || active.letter===OBSTACLE || active.letter===BLACKHOLE) return;
     if(!anticVibrate && !anticSmoke && !anticHeat) return;
@@ -2529,16 +2530,22 @@
     const keys=Object.keys(heat); if(!keys.length) return;
     _anticProx=prox; _anticCells=keys.length; _anticWord=word;
     const map={}, st=document.getElementById("stack");
-    if(st) for(const t of st.children){ const c=Math.round((parseFloat(t.style.left)-ins)/cell), r=Math.round((parseFloat(t.style.top)-ins)/cell); map[r+","+c]=t; }
+    if(st) for(const t of st.children){ const k=(t.dataset&&t.dataset.r!=null)?(t.dataset.r+","+t.dataset.c):(Math.round((parseFloat(t.style.top)-ins)/cell)+","+Math.round((parseFloat(t.style.left)-ins)/cell)); map[k]=t; }
     keys.forEach(k=>{ const t=map[k]; if(!t) return; const p=heat[k];
       const amp=0.4+p*2.6, rot=p*4, H=(15+p*42).toFixed(0), L=(52+p*20).toFixed(0);   // 15deg orange-red -> 57deg yellow, brighter as hotter
       if(anticVibrate){ const rx=(Math.random()*2-1)*amp, ry=(Math.random()*2-1)*amp, rr=(Math.random()*2-1)*rot;
         t.style.transform="translate("+rx.toFixed(1)+"px,"+ry.toFixed(1)+"px) rotate("+rr.toFixed(1)+"deg)"; }
       if(anticHeat){
         t.style.boxShadow="inset 0 0 "+(5+p*16).toFixed(0)+"px "+(2+p*5).toFixed(0)+"px hsla("+H+",100%,"+L+"%,"+(p*0.9).toFixed(2)+"), 0 0 "+(p*22).toFixed(0)+"px hsla("+H+",100%,56%,"+(p*0.72).toFixed(2)+")";
-        t.style.filter=p>0.04?("brightness("+(1+p*0.55).toFixed(2)+") saturate("+(1+p*0.8).toFixed(2)+")"):""; }
+        t.style.filter=p>0.04?("brightness("+(1+p*0.55).toFixed(2)+") saturate("+(1+p*0.8).toFixed(2)+")"):"";
+        const g=t.querySelector(".glyph"); if(g) g.style.color="hsl(0,0%,"+Math.round((1-p)*40)+"%)"; }   // letters darken to black so they read through smoke
       if(anticSmoke && smokeOn && Math.random()<p*0.11){ try{ emitSmoke(new Set([k])); }catch(_){} }   // hotter/harder buzz -> more smoke
       _buzzTiles.push(t); });
+    // the falling brick itself heats/buzzes as it nears completing the word (it lives in #activeTile, not #stack)
+    if(prox>0.02){ const at=document.getElementById("activeTile"); if(at){ const p=prox, amp=0.4+p*2.6, rot=p*4, H=(15+p*42).toFixed(0), L=(52+p*20).toFixed(0);
+      if(anticVibrate){ const rx=(Math.random()*2-1)*amp, ry=(Math.random()*2-1)*amp, rr=(Math.random()*2-1)*rot; at.style.transform="translate("+rx.toFixed(1)+"px,"+ry.toFixed(1)+"px) rotate("+rr.toFixed(1)+"deg)"; }
+      if(anticHeat){ at.style.boxShadow="inset 0 0 "+(5+p*16).toFixed(0)+"px "+(2+p*5).toFixed(0)+"px hsla("+H+",100%,"+L+"%,"+(p*0.9).toFixed(2)+"), 0 0 "+(p*22).toFixed(0)+"px hsla("+H+",100%,56%,"+(p*0.72).toFixed(2)+")"; at.style.filter=p>0.04?("brightness("+(1+p*0.55).toFixed(2)+") saturate("+(1+p*0.8).toFixed(2)+")"):""; const ag=at.querySelector(".glyph"); if(ag) ag.style.color="hsl(0,0%,"+Math.round((1-p)*40)+"%)"; }
+      _buzzTiles.push(at); } }
   }
   function updateLandHint(){
     let host=document.getElementById("landHint");
