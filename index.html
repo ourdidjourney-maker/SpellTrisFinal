@@ -12,6 +12,10 @@
      👋 WANT TO TWEAK THIS GAME?  START HERE.
      This is ONE file — the whole game. You can open it in any text
      editor, change things, save, and reload in your browser.
+     The friendly notes (like this one) mark the spots people usually
+     want to change: colors, board size, the word list, speeds, sounds.
+     Anything marked "heavy machinery / leave alone" is the brainy stuff
+     that already works — you don't need to touch it to mod the game.
      Tip: always keep a backup copy before you start changing things.
      ============================================================ */
 
@@ -149,7 +153,10 @@
     0%,100%{box-shadow:inset 0 1px 0 rgba(255,255,255,.3), 0 0 6px rgba(120,224,255,.3); filter:brightness(1);}
     50%{box-shadow:inset 0 1px 0 rgba(255,255,255,.55), 0 0 22px rgba(130,228,255,.95), 0 0 40px rgba(80,200,255,.7); filter:brightness(1.4);}
   }
-  .tile.active.candelete{animation:delGlow 1.6s ease-in-out infinite;}
+  /* Delete FX: the falling brick used to PULSE (delGlow, infinite) to show a delete was
+     affordable. The pulse was distracting, so the cue is now a steady rim glow -- same signal,
+     no throb. Toggle "Delete FX" still turns it off entirely. */
+  .tile.active.candelete{box-shadow:inset 0 1px 0 rgba(255,255,255,.4), 0 0 14px rgba(120,224,255,.55), 0 8px 18px rgba(0,0,0,.4);}
   @keyframes popIn{0%{transform:scale(.1) rotate(-18deg);opacity:0;}60%{transform:scale(1.18) rotate(4deg);opacity:1;}100%{transform:scale(1) rotate(0);opacity:1;}}
   @keyframes screenShake{
     0%,100%{transform:translate(0,0);}
@@ -204,8 +211,10 @@
   #stack,#active,#fx{position:absolute;inset:0;pointer-events:none;}
   .landcell{position:absolute;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:2px solid rgba(120,200,255,.75);border-radius:8px;
     box-shadow:0 0 12px rgba(120,200,255,.45),inset 0 0 10px rgba(120,200,255,.2);pointer-events:none;
-    animation:landPulse 1s ease-in-out infinite;}
+    opacity:.7;}
   .landcell .lpv{color:rgba(160,215,255,.42);font-family:var(--display,inherit);font-weight:800;line-height:1;}
+  .lpcol{position:absolute;box-sizing:border-box;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:.7;}
+  .lpcol .lpv{color:rgba(160,215,255,.42);font-family:var(--display,inherit);font-weight:800;line-height:1;}
   @keyframes landPulse{ 0%,100%{opacity:.32;} 50%{opacity:.95;} }
   #fx{z-index:5;}
   #heatcv{position:absolute;inset:0;pointer-events:none;}                 /* cooling-metal glow — sits BEHIND the tiles (DOM order) */
@@ -227,6 +236,78 @@
   .anticmenu{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:6px;display:none;flex-direction:column;gap:3px;
     background:rgba(6,12,26,.97);border:1px solid rgba(56,232,255,.42);border-radius:8px;padding:5px;z-index:90;min-width:112px;box-shadow:0 8px 20px rgba(0,0,0,.5);}
   .anticbtn:hover .anticmenu{display:flex;}
+  .lpbtn{position:relative;cursor:pointer;}
+  .anticmenu.open{display:flex;}
+  #recCount{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:14;display:none;pointer-events:none;
+    font-family:var(--display,sans-serif);font-weight:800;font-size:clamp(52px,13vw,110px);line-height:1;color:#9af1ff;
+    text-shadow:0 0 26px rgba(56,232,255,.9),0 0 60px rgba(56,232,255,.5);letter-spacing:2px;text-align:center;}
+  #recCount small{display:block;font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:#cdefff;
+    text-shadow:none;opacity:.85;margin-top:10px;font-weight:600;}
+  #recCount.show{display:block;animation:recTick 1s ease-in-out infinite;}
+  @keyframes recTick{0%,100%{transform:translate(-50%,-50%) scale(1);}50%{transform:translate(-50%,-50%) scale(1.09);}}
+  .tile.aibrick.aibrick{background:linear-gradient(180deg, rgba(255,138,170,.82), rgba(196,66,110,.86));
+    color:#3a0a1e;border:1px solid rgba(255,175,200,.5);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.25), 0 3px 8px rgba(0,0,0,.35), 0 0 14px rgba(255,110,160,.35);}
+  .tile.active.aibrick.aibrick{background:linear-gradient(160deg, rgba(255,235,244,.95), rgba(255,170,200,.78) 45%, rgba(240,110,160,.62));
+    color:#3a0a1e;box-shadow:inset 0 2px 3px rgba(255,255,255,.85), 0 0 22px rgba(255,130,175,.6), 0 8px 18px rgba(0,0,0,.4);}
+  #sdPanel{position:fixed;right:10px;bottom:210px;width:330px;max-height:52vh;overflow:auto;display:none;z-index:130;
+    background:rgba(6,12,26,.94);border:1px solid rgba(255,138,156,.4);border-radius:10px;padding:8px 9px;
+    font-family:ui-monospace,Menlo,Consolas,monospace;font-size:10.5px;line-height:1.4;color:#cfe9ff;
+    box-shadow:0 10px 30px rgba(0,0,0,.5);scrollbar-width:thin;scrollbar-color:rgba(56,232,255,.5) transparent;}
+  #sdPanel::-webkit-scrollbar{width:6px;} #sdPanel::-webkit-scrollbar-track{background:transparent;}
+  #sdPanel::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(56,232,255,.55),rgba(56,232,255,.28));border-radius:5px;}
+  #sdPanel .sdtitle{display:flex;align-items:center;gap:2px;font-weight:800;letter-spacing:.1em;color:#ff8a9c;margin-bottom:6px;}
+  #sdPanel .sdtitle button{margin-left:6px;font:inherit;font-size:9px;background:rgba(255,255,255,.06);color:#9fd;border:1px solid rgba(56,232,255,.35);border-radius:5px;padding:1px 6px;cursor:pointer;}
+  #sdPanel .sdrow{border-top:1px solid rgba(255,255,255,.07);padding:4px 0;}
+  #sdPanel .sdhead{color:#eaf6ff;}
+  #sdPanel .sdsub{color:#7fa8b8;font-size:9.5px;}
+  #sdPanel .sdsee .seehd{color:#ff8a8a;font-weight:800;letter-spacing:.05em;margin:3px 0 2px;}
+  #sdPanel .sdsee .swrow{padding:1px 0 1px 4px;border-left:2px solid rgba(255,60,80,.25);margin:1px 0;}
+  #sdPanel .sdsee .swrow.tk{border-left-color:#7dffb0;background:rgba(125,255,176,.07);}
+  #sdPanel .sdsee .tkm{color:#7dffb0;} #sdPanel .sdsee .skm{color:#c25a68;}
+  #sdPanel .sdsee .sm{color:#ffb0b0;margin:0 5px;opacity:.95;}
+  #sdPanel .sdsee .sm i{color:#ffd76a;font-style:normal;font-weight:800;}
+  #sdPanel .sdgd{color:#7dd8ff;font-size:9.5px;margin-top:2px;line-height:1.5;}
+  #sdPanel .sdgd .gdhd{font-weight:800;letter-spacing:.05em;margin:2px 0;}
+  #sdPanel .sdgd.adv{color:#ff9d6a;}
+  #sdPanel .sdgd.adv .gdrow{border-left-color:rgba(255,140,80,.35);}
+  #sdPanel .sdgd.adv .gw{color:#ffc39a;}
+  #sdPanel .sdgd .gdrow{padding:1px 0 1px 4px;border-left:2px solid rgba(125,216,255,.3);margin:1px 0;}
+  #sdPanel .sdgd .gdrow.bad{border-left-color:#ff5a5a;background:rgba(255,90,90,.08);}
+  #sdPanel .sdgd .gdrow.ok{border-left-color:#7dffb0;background:rgba(125,255,176,.08);}
+  #sdPanel .sdgd .gc{color:#7fa8b8;margin-right:3px;}
+  #sdPanel .sdgd .gf{color:#eaf6ff;letter-spacing:.1em;}
+  #sdPanel .sdgd .gn{color:#7fa8b8;}
+  #sdPanel .sdgd .gw{color:#9fe6ff;font-weight:800;margin-left:4px;}
+  #sdPanel .sdgd .gl{color:#ffd76a;margin-left:1px;}
+  #sdPanel .sdgd .gc.bad{color:#ff5a5a;font-weight:800;} #sdPanel .sdgd .ok{color:#7dffb0;} #sdPanel .sdgd .bad{color:#ff5a5a;}
+  #sdPanel .sdsee{color:#ff6a6a;font-size:9.5px;margin-top:2px;line-height:1.5;word-break:break-word;}
+  #sdPanel .sdsee .swp{color:#7dffb0;font-weight:800;letter-spacing:.04em;text-shadow:0 0 8px rgba(125,255,176,.5);}
+  #sdPanel .sdsee .sw{color:#ff3b4e;font-weight:800;letter-spacing:.04em;}
+  #sdPanel .sdsee .sv{color:#ffb84d;font-weight:800;margin-left:3px;}
+  #sdPanel .sdsee .sl{color:#c25a68;opacity:.9;margin:0 6px 0 2px;}
+  #sdPanel .dim{color:#7fa8b8;} #sdPanel .good{color:#7dffb0;} #sdPanel .bad{color:#ff6a6a;}
+  #overBanner{position:absolute;left:0;right:0;top:38%;z-index:60;text-align:center;pointer-events:none;
+    opacity:0;transform:translateY(14px);transition:opacity .45s ease,transform .45s cubic-bezier(.2,.9,.3,1);}
+  #overBanner.go{opacity:1;transform:translateY(0);pointer-events:auto;}
+  #overBanner .obT{font-family:var(--display,sans-serif);font-weight:800;letter-spacing:.06em;
+    font-size:clamp(20px,4.4vw,34px);line-height:1.1;text-shadow:0 0 26px rgba(56,232,255,.35);}
+  #overBanner .obS{margin-top:8px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#cdefff;opacity:.9;}
+  #overBanner .obR{margin-top:4px;font-size:11px;color:#7fa8b8;opacity:.8;padding:0 14px;}
+  #overBanner .obB{margin-top:14px;font-family:var(--display,sans-serif);font-weight:700;font-size:13px;cursor:pointer;
+    color:#04121e;background:linear-gradient(180deg,#8ef0ff,#38e8ff);border:0;border-radius:999px;padding:8px 22px;
+    box-shadow:0 6px 18px rgba(56,232,255,.35);}
+  #overBanner .obB:hover{filter:brightness(1.08);}
+  #sdBadge{position:absolute;left:50%;top:100%;margin-top:8px;transform:translateX(-50%);z-index:14;display:none;pointer-events:none;
+    font-family:var(--display,sans-serif);font-size:11px;font-weight:800;letter-spacing:.16em;white-space:nowrap;
+    background:rgba(6,12,26,.86);border:1px solid rgba(56,232,255,.4);border-radius:999px;padding:3px 12px;}
+  #recDot{position:absolute;left:8px;top:8px;z-index:14;display:none;align-items:center;gap:6px;pointer-events:none;
+    font-family:var(--display,sans-serif);font-weight:700;font-size:11px;letter-spacing:.14em;color:#ffd9e0;
+    background:rgba(10,6,14,.7);border:1px solid rgba(255,72,98,.6);border-radius:999px;padding:3px 9px 3px 6px;}
+  #recDot.show{display:flex;}
+  #recDot i{width:8px;height:8px;border-radius:50%;background:#ff3b5c;box-shadow:0 0 8px rgba(255,60,90,.95);
+    animation:recBlink 1s ease-in-out infinite;}
+  @keyframes recBlink{0%,100%{opacity:1;}50%{opacity:.25;}}
   .anticopt{font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px;cursor:pointer;color:var(--ink-dim,#8fb);background:rgba(255,255,255,.04);border:1px solid transparent;white-space:nowrap;text-align:left;}
   .anticopt:hover{background:rgba(56,232,255,.14);}
   .anticopt.on{color:#eafffb;border-color:rgba(56,232,255,.5);background:rgba(56,232,255,.16);}
@@ -769,6 +850,8 @@
 
   <div class="hud">
     <div class="pill"><div class="k">Score</div><div class="v" id="score">0</div></div>
+    <div class="pill" id="pillYou" style="display:none"><div class="k">You</div><div class="v" id="sdYou" style="color:#7dffc0">0</div></div>
+    <div class="pill" id="pillAi" style="display:none"><div class="k">AI</div><div class="v" id="sdAi" style="color:#ff8a9c">0</div></div>
     <div class="pill"><div class="k">Level</div><div class="v" id="level">1</div></div>
     <div class="pill"><div class="k">Words</div><div class="v" id="words">0</div></div>
     <div class="pill"><div class="k">Combo</div><div class="v combo" id="combo">×1</div></div>
@@ -828,6 +911,8 @@
       <canvas id="smokecv"></canvas>
       <canvas id="sparkcv"></canvas>
       <div id="agClock"></div>
+      <div id="recCount"></div>
+      <div id="recDot"></div>
     </div>
     <div id="agEmit"></div>
     <div id="bonusBar"><span id="bonusMsg">BONUS &mdash; choose your letters</span><button id="bonusDone">Done</button></div>
@@ -904,7 +989,12 @@
       <button class="btn on" id="bSmoke">Smoke: On</button>
       <button class="btn" id="bJumble" title="Shake the whole board and rearrange every brick (once per game)">Jumble</button>
       <button class="btn" id="bBricked" title="Bricked: emitters have a 20% chance to drop an undeletable sentinel block with each new brick (all modes)">Bricked: Off</button>
-      <button class="btn classbtn" id="bLetterPrev" title="Letter preview: shows a faint copy of the falling letter inside its predicted landing cell, so you never have to look away from the board">Letter Preview: Off</button>
+      <div class="btn lpbtn classbtn" id="bLetterPrev">Letter Preview<div class="anticmenu" id="lpMenu"><div class="anticopt" data-lp="cell">Landing cell</div><div class="anticopt" data-lp="col">Column</div></div></div>
+      <button class="btn classbtn" id="bBrain" style="display:none" title="AI Brain UI: the decision log, vision and guard readouts. Turning it off stops all capture and frees its memory.">Brain: On</button>
+      <button class="btn classbtn" id="bCoop" title="Co-op: the AI plays WITH you — it spells when it can, and otherwise feeds you letters that set up words">Co-op: Off</button>
+      <button class="btn classbtn" id="bSdMode" style="display:none" title="Showdown AI brain: Dual (spell + block) / Spell only / Block only">AI: Dual</button>
+      <button class="btn classbtn" id="bShowdown" title="Showdown: you and the AI trade turns — it plays to block you, not to spell">Showdown: Off</button>
+      <div class="btn lpbtn" id="bRecord">Record<div class="anticmenu" id="recMenu"><div class="anticopt" data-rec="toggle">Start recording</div><div class="anticopt" data-rec="back">Return to game</div><div class="anticopt" data-rec="play">Playback</div><div class="anticopt" data-rec="flush">Memory flush</div></div></div>
       <div class="btn anticbtn" id="bAntic">Word FX<div class="anticmenu"><div class="anticopt on" data-fx="vib">Vibration</div><div class="anticopt on" data-fx="smoke">Smoke</div><div class="anticopt on" data-fx="heat">Heat</div></div></div>
       <button class="btn" id="bMisspell" title="Misspell: turns a letter red when a run of bricks isn't a word but uses the exact letters of one, like GAURD for GUARD">Misspell: Off</button>
       <button class="btn on" id="bSpark">Static: On</button>
@@ -1042,6 +1132,7 @@
       <button class="cta ghostbtn" id="wordsFromStart">Manage words</button>
       <button class="cta ghostbtn" id="bitFromStart" title="Built-In Test: self-check the debug monitor &amp; black-box recorder">BIT</button>
       <button class="cta ghostbtn" id="demoFromStart" title="Watch the AI play the game by itself">&#9654; Watch Demo</button>
+      <button class="cta ghostbtn" id="demoShowdown" title="Watch the AI duel itself in Showdown — one side spells, the other denies">&#9876; Watch Showdown</button>
     </div>
   </div>
 </div>
@@ -1181,6 +1272,9 @@
         <li><b>Jumble</b> &mdash; once per game, in any mode, violently shake the whole board like a jar of marbles. Every brick and block tumbles around, then settles into a brand-new random arrangement (any words that form clear on the spot).</li>
         <li><b>Bricked</b> &mdash; a toggle for any mode. While it's on, every new brick from the emitter has a 20&percnt; chance of instead being a grey sentinel block that drops in from the same spot. You never know when one's coming, and these sentinels <b>cannot be deleted</b> &mdash; they lock wherever they land and get in your way.</li>
         <li><b>Misspell</b> &mdash; a learning aid you can toggle on. When a run of bricks isn't a real word but uses the exact letters of one &mdash; for example <b>GAURD</b>, which is really <b>GUARD</b> &mdash; those letters turn red, so you can see you've almost spelled a word and just need to rearrange it.</li>
+        <li><b>Showdown</b> (Main game) &mdash; you versus the AI, trading turns. You place a letter, then the AI places the next one &mdash; and it plays to <b>beat you</b>: it reads your runs and drops its letter <i>away</i> from them so it never finishes a word for you, avoids feeding letters next to your work, keeps its junk shallow, and will even shift-lock a brick into a mid-air overhang to wreck your setup. Your controls are locked while it's thinking; a badge above the board shows whose turn it is.</li>
+        <li><b>Record</b> &mdash; click it for a menu. <b>Start recording</b> captures your game (a red &#9679; REC badge shows on the board); click <b>Stop recording</b> to end. <b>Playback</b> pauses the game, counts down from 20 on the board, then replays what you recorded. <b>Return to game</b> counts down from 20 and drops you back exactly where you left off. <b>Memory flush</b> erases the recorded frames from memory (recording only &mdash; your game is untouched).</li>
+        <li><b>Letter Preview</b> (Main game and Sandbox) &mdash; click the button to open its two independent options. <b>Landing cell</b> shows a faint copy of the falling letter in the exact cell where it will land. <b>Column</b> fills the whole column above that landing cell with the same letter at the same faint opacity, so you can read the drop path without looking away from the board.</li>
         <li><b>&#9654;AI Play</b> &mdash; hand your live game to the AI; press <b>Take Over</b> on the badge to take it back. See "Watch the AI play" below.</li>
         <li><b>Words</b> — open the dictionary to add, import, or export your own word lists (saved on your device).</li>
         <li><b>Sound</b> — toggle audio.</li>
@@ -1726,7 +1820,7 @@
   let jumbleUsed=false;   // one jumble per game
   let paintedSentinels=new Set();   // "r,c" cells painted via Sentinel mode — immune to jumble
   let brickedOn=false;    // Bricked mode: emitters occasionally drop an undeletable sentinel
-  let letterPreviewOn=false;   // faint letter shown in the predicted landing cell
+  let lpCell=false, lpColumn=false;   // Letter Preview: landing-cell letter + full-column fading trail
   let anticVibrate=true, anticSmoke=true, anticHeat=true;   // word-anticipation effect sub-toggles
   function doJumble(){
     if(jumbleUsed || state!=="play" || !grid) return;
@@ -2232,6 +2326,7 @@
     if(cascadeMode) highlightSpawnPip(col);
     // a brick can't enter a column already full to the top → game over (no rerouting to a new column)
     if(grid[0][col]!=null){ let _alt=-1; for(let _cc=0;_cc<COLS;_cc++){ if(grid[0][_cc]==null){ _alt=_cc; break; } } if(_alt>=0) col=_alt; else { gameOver("A column stacked to the ceiling."); return; } }
+    if(sdActive() && !demoOn){ sdTurn = (sdTurn==="player") ? "ai" : "player"; _sdLast=null; softDrop=false; slowFall=false; sdBadge(); }   // Showdown: whose piece is this? decide BEFORE drawing it
     active={col, letter:nextLetter, y:-cell*0.9};
     if(brickedOn && Math.random()<0.20){ active.letter=OBSTACLE; active.sentinel=true; }   // Bricked: surprise sentinel
     nextLetter=chooseLetterBiased();
@@ -2380,8 +2475,16 @@
     return t;
   }
   // Misspell: find runs of letters that aren't a word themselves but ARE an anagram of one (e.g. GAURD -> GUARD).
+  let _mrSig=null, _mrCache=[];
   function misspellRuns(){
     if(!misspellOn || ANAGRAMS.size===0) return [];
+    // Cache on the board's ACTUAL CONTENT, not a render counter: anything that writes the
+    // grid without rendering (the BIT does exactly this) must still invalidate the scan.
+    let sig=MINLEN+"|"+ROWS+"x"+COLS+"|";
+    for(let r=0;r<ROWS;r++){ const row=grid[r]; if(!row) break;
+      for(let c=0;c<COLS;c++){ const v=row[c]; sig+=(v==null?".":v); } }
+    if(sig===_mrSig) return _mrCache;           // board unchanged -> reuse the last scan
+    _mrSig=sig;
     const runs=[], MIN=Math.max(2, MINLEN);   // track misspells at the mode's shortest-word length (3, 4, ...)
     const scan=(cells,horiz)=>{ let best=null;
       for(let a=0;a<cells.length;a++)for(let b=a+MIN;b<=cells.length;b++){
@@ -2392,6 +2495,7 @@
       if(ch!=null&&ch>="A"&&ch<="Z") run.push({r,c,ch}); else { if(run.length)scan(run,true); run=[]; } } if(run.length)scan(run,true); }
     for(let c=0;c<COLS;c++){ let run=[]; for(let r=0;r<ROWS;r++){ const ch=grid[r][c];
       if(ch!=null&&ch>="A"&&ch<="Z") run.push({r,c,ch}); else { if(run.length)scan(run,false); run=[]; } } if(run.length)scan(run,false); }
+    _mrCache=runs;
     return runs;
   }
   function misspellCells(){ const rs=misspellRuns(); if(!rs.length) return null;
@@ -2433,6 +2537,7 @@
     popMisspellChips();
   }
   function renderStack(clearingSet){
+    _gridVer++;                       // board changed -> anticipation cache must rebuild
     stackEl.innerHTML="";
     const redCells = restricted.size ? restrictedCells() : null;
     const missCells = misspellOn ? misspellCells() : null;
@@ -2448,7 +2553,8 @@
         const lk = false;   // locked bricks (shift-lock, floats, AG) keep the normal blue tile look, no orange
         const red = redCells && redCells.has(key);
         const pop = popCells && popCells.has(key);
-        const _mt=makeTile((clearing?"clearing":"rest")+(lk?" locked":"")+(red?" restricted":"")+(pop?" pop":""), ch, c, r);
+        const _ai=(sdActive() && sdAiCells.has(key)) ? " aibrick" : "";
+        const _mt=makeTile((clearing?"clearing":"rest")+(lk?" locked":"")+(red?" restricted":"")+(pop?" pop":"")+_ai, ch, c, r);
         if(missCells && missCells.has(key)){ const gl=_mt.querySelector(".glyph"); if(gl) gl.classList.add("misspell");
           _mt.style.pointerEvents="auto"; _mt.style.cursor="pointer"; _mt.title="Click to show the correction";
           const _rr=r,_cc=c; _mt.addEventListener("click",e=>{ e.stopPropagation(); reopenMisspell(_rr,_cc); }); }
@@ -2476,7 +2582,7 @@
     const inset=tileInset(), size=cell-inset*2;
     const glow = (deleteFxOn && score>=2 && !active.ag && !active.sentinel) ? " candelete" : "";
     const t=document.createElement("div");
-    t.className="tile active"+glow+(active.sentinel?" obstacle":""); t.id="activeTile";
+    t.className="tile active"+glow+(active.sentinel?" obstacle":"")+((sdActive()&&sdTurn==="ai")?" aibrick":""); t.id="activeTile";
     t.style.width=size+"px"; t.style.height=size+"px"; t.style.fontSize=tileFont();
     const g=document.createElement("span"); g.className="glyph"; g.textContent=active.sentinel?"":active.letter;
     t.appendChild(g);
@@ -2494,26 +2600,53 @@
     positionActive();
   }
   let _buzzTiles=[], _anticProx=0, _anticCells=0, _anticWord="";
+  let _gridVer=0, _anticKey="", _anticList=[];   // cache: the completing cells only change when the board/letter/column does
   // Detection only (no DOM): every empty cell the active letter could reach that completes a word.
   function anticWordCells(){
     const heat={}; let bestWord="", bestProx=0;
     if(!active || active.letter===OBSTACLE || active.letter===BLACKHOLE) return {heat, word:"", prox:0};
     const L=active.letter, CELL=(cell>0?cell:40);
-    const isLtr=v=>v!=null && v!==OBSTACLE && v!==BLACKHOLE;
-    const hasNb=(r,c)=>((r>0&&isLtr(grid[r-1][c]))||(r<ROWS-1&&isLtr(grid[r+1][c]))||(c>0&&isLtr(grid[r][c-1]))||(c<COLS-1&&isLtr(grid[r][c+1])));
+    // ---- HEAVY PART, CACHED: which empty cells would complete a word? This only changes when the
+    // board, the letter, or the column changes -- never while the piece is merely falling.
+    const key=_gridVer+"|"+L+"|"+(active.ag?"ag":active.col)+"|"+MINLEN;
+    if(key!==_anticKey){
+      _anticKey=key; _anticList=[];
+      const isLtr=v=>v!=null && v!==OBSTACLE && v!==BLACKHOLE;
+      const hasNb=(r,c)=>((r>0&&isLtr(grid[r-1][c]))||(r<ROWS-1&&isLtr(grid[r+1][c]))||(c>0&&isLtr(grid[r][c-1]))||(c<COLS-1&&isLtr(grid[r][c+1])));
+      const cand=[];
+      if(active.ag){ for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ if(grid[r][c]==null && hasNb(r,c)) cand.push([r,c]); } }
+      else { const c=active.col; for(let r=0;r<ROWS;r++){ if(c>=0&&c<COLS&&grid[r][c]==null && hasNb(r,c)) cand.push([r,c]); } }
+      cand.forEach(a=>{ const cr=a[0], cc=a[1];
+        grid[cr][cc]=L; const words=wordsThroughCell(cr,cc); grid[cr][cc]=null;
+        if(!words.length) return;
+        const keys=[]; words.forEach(w=>w.forEach(p=>{ if(!(p.r===cr&&p.c===cc)) keys.push(p.r+","+p.c); }));
+        grid[cr][cc]=L;
+        const word=(words[0]||[]).map(p=>(grid[p.r]&&grid[p.r][p.c])||"?").join("");
+        grid[cr][cc]=null;
+        _anticList.push({cr,cc,keys,word});
+      });
+    }
+    if(!_anticList.length) return {heat, word:"", prox:0};
+    // ---- CHEAP PART, EVERY FRAME: just distance -> intensity.
+    // Heat ONLY the completion the brick is actually travelling to. Lighting every word in the
+    // column meant a word the piece falls straight past still glowed -- letters a couple of
+    // cells away burning for a solution that was never going to happen.
     const bx=(active.ag?((active.x||0)+CELL/2):(active.col*CELL+CELL/2)), by=((active.y!=null?active.y:0)+CELL/2);
-    const cand=[];
-    if(active.ag){ for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ if(grid[r][c]==null && hasNb(r,c)) cand.push([r,c]); } }
-    else { const c=active.col; for(let r=0;r<ROWS;r++){ if(c>=0&&c<COLS&&grid[r][c]==null && hasNb(r,c)) cand.push([r,c]); } }
-    cand.forEach(a=>{ const cr=a[0], cc=a[1];
-      grid[cr][cc]=L; const words=wordsThroughCell(cr,cc); grid[cr][cc]=null;
-      if(!words.length) return;
-      const cx=cc*CELL+CELL/2, cy=cr*CELL+CELL/2, dist=Math.hypot(bx-cx,by-cy);
-      const prox=Math.max(0, Math.min(1, 1-dist/(5*CELL)));
-      if(prox<=0.02) return;
-      if(prox>bestProx){ bestProx=prox; bestWord=(words[0]||[]).map(p=>(p.r===cr&&p.c===cc)?L:((grid[p.r]&&grid[p.r][p.c])||"?")).join(""); }
-      words.forEach(w=>w.forEach(p=>{ if(!(p.r===cr&&p.c===cc)){ const k=p.r+","+p.c; if(!heat[k]||heat[k]<prox) heat[k]=prox; } }));
-    });
+    let pick=null;
+    for(const e of _anticList){
+      const cx=e.cc*CELL+CELL/2, cy=e.cr*CELL+CELL/2;
+      const dx=bx-cx, dy=by-cy, dist=Math.sqrt(dx*dx+dy*dy);
+      const prox=1-dist/(5*CELL);
+      if(prox<=0.02) continue;
+      const p=prox>1?1:prox;
+      // prefer the nearest candidate AT OR BELOW the brick: that is where it is heading.
+      const ahead = active.ag ? true : (e.cr*CELL >= (active.y!=null?active.y:0) - CELL*0.5);
+      const rank = (ahead?1000:0) + p;
+      if(!pick || rank>pick.rank){ pick={e,p,rank}; }
+    }
+    if(!pick) return {heat, word:"", prox:0};
+    bestProx=pick.p; bestWord=pick.e.word;
+    for(const k of pick.e.keys) heat[k]=pick.p;
     return {heat, word:bestWord, prox:bestProx};
   }
   function updateWordAnticipation(){          // bricks that would complete a word buzz harder as the letter nears
@@ -2521,9 +2654,9 @@
     _anticProx=0; _anticCells=0; _anticWord="";
     if(!active || state!=="play" || resolving || active.letter===OBSTACLE || active.letter===BLACKHOLE) return;
     if(!anticVibrate && !anticSmoke && !anticHeat) return;
-    const ins=tileInset();
     const {heat, word, prox}=anticWordCells();
     const keys=Object.keys(heat); if(!keys.length) return;
+    const ins=tileInset();
     _anticProx=prox; _anticCells=keys.length; _anticWord=word;
     const map={}, st=document.getElementById("stack");
     if(st) for(const t of st.children){ const k=(t.dataset&&t.dataset.r!=null)?(t.dataset.r+","+t.dataset.c):(Math.round((parseFloat(t.style.top)-ins)/cell)+","+Math.round((parseFloat(t.style.left)-ins)/cell)); map[k]=t; }
@@ -2543,21 +2676,40 @@
       if(anticHeat){ at.style.boxShadow="inset 0 0 "+(5+p*16).toFixed(0)+"px "+(2+p*5).toFixed(0)+"px hsla("+H+",100%,"+L+"%,"+(p*0.9).toFixed(2)+"), 0 0 "+(p*22).toFixed(0)+"px hsla("+H+",100%,56%,"+(p*0.72).toFixed(2)+")"; at.style.filter=p>0.04?("brightness("+(1+p*0.55).toFixed(2)+") saturate("+(1+p*0.8).toFixed(2)+")"):""; const ag=at.querySelector(".glyph"); if(ag) ag.style.color="hsl(0,0%,"+Math.round((1-p)*40)+"%)"; }
       _buzzTiles.push(at); } }
   }
+  let _lhSig="";
   function updateLandHint(){
     let host=document.getElementById("landHint");
     if(!host){ if(!board) return; host=document.createElement("div"); host.id="landHint";
-      host.style.cssText="position:absolute;inset:0;pointer-events:none;z-index:3;"; board.appendChild(host); }
+      host.style.cssText="position:absolute;inset:0;pointer-events:none;z-index:3;"; board.appendChild(host); _lhSig=""; }
+    // Cheap signature: only rebuild the overlay when something it draws actually changed.
+    const _sig=(!active||state!=="play"||resolving||active.ag||gameMode==="antigrav") ? "-"
+      : (active.col+"|"+active.letter+"|"+landingRow()+"|"+(lpCell?1:0)+(lpColumn?1:0)+"|"+cell+"|"+_gridVer+"|"+(active.mate?active.mate.dr+","+active.mate.dc+active.mate.letter:""));
+    if(_sig===_lhSig) return;
+    _lhSig=_sig;
     host.innerHTML="";
     if(!active || state!=="play" || resolving || active.ag || gameMode==="antigrav") return;   // no landing predictor in Anti-Gravity
-    const ins=tileInset(), sz=cell-ins*2, cells=[];
-    { const pr=landingRow();
-      if(pr>=0){ cells.push([pr,active.col,active.letter]); if(active.mate) cells.push([pr+active.mate.dr, active.col+active.mate.dc, active.mate.letter]); }
-    }
-    cells.forEach(a=>{ const r=a[0],c=a[1],L=a[2]; if(r<0||r>=ROWS||c<0||c>=COLS) return;
+    const ins=tileInset(), sz=cell-ins*2;
+    const pr=landingRow(); if(pr<0) return;
+    const col=active.col, L=active.letter;
+    const cells=[[pr,col,L]]; if(active.mate) cells.push([pr+active.mate.dr, col+active.mate.dc, active.mate.letter]);
+    cells.forEach(a=>{ const r=a[0],c=a[1],ll=a[2]; if(r<0||r>=ROWS||c<0||c>=COLS) return;
       const d=document.createElement("div"); d.className="landcell";
       d.style.left=(c*cell+ins)+"px"; d.style.top=(r*cell+ins)+"px"; d.style.width=sz+"px"; d.style.height=sz+"px";
-      if(letterPreviewOn && L && L!==OBSTACLE && L!==BLACKHOLE){ d.style.fontSize=tileFont(); d.innerHTML='<span class="lpv">'+L+'</span>'; }
+      if(lpCell && ll && ll!==OBSTACLE && ll!==BLACKHOLE){ d.style.fontSize=tileFont(); d.innerHTML='<span class="lpv">'+ll+'</span>'; }
       host.appendChild(d); });
+    // Letter Preview column trail: walk the WHOLE column top-to-bottom, but only draw in EMPTY
+    // cells. It still reaches past a brick to the empty cells below it -- it just never paints
+    // a preview letter on top of one.
+    if(lpColumn && L && L!==OBSTACLE && L!==BLACKHOLE && col>=0 && col<COLS){
+      for(let r=0;r<ROWS;r++){
+        if(grid[r] && grid[r][col]!=null) continue;                // a brick lives here: never overlay it
+        if(r===pr && lpCell) continue;                             // landing cell is drawn by lpCell
+        const d=document.createElement("div"); d.className="lpcol";
+        d.style.left=(col*cell+ins)+"px"; d.style.top=(r*cell+ins)+"px"; d.style.width=sz+"px"; d.style.height=sz+"px"; d.style.fontSize=tileFont();
+        d.innerHTML='<span class="lpv">'+L+'</span>';
+        host.appendChild(d);
+      }
+    }
   }
   function positionActive(){
     const t=$("activeTile"); if(!t||!active) return;
@@ -2933,7 +3085,7 @@
       if(found.cells.size===0) break;
       cleared+=found.cells.size;
       found.cells.forEach(key=>{ const [rr,cc]=key.split(",").map(Number); grid[rr][cc]=null; lockedSet.delete(key); clearFeed.push(key); }); if(bhPower>0) popRandomHole(); if(brickedOn) popSentinels(found.words?found.words.length:1);
-      applyGravity();
+      sdPreGravity(); applyGravity(); sdPostGravity();
     }
     if(cleared){ renderStack(); updateDanger(); toast(cleared+" tile"+(cleared>1?"s":"")+" cleared"); }
   }
@@ -2950,6 +3102,7 @@
       const r=pr+dr, c=active.col+dc;
       if(r<0||r>=ROWS||c<0||c>=COLS||grid[r][c]!=null) continue;
       grid[r][c]=L; if(L===OBSTACLE||L===BLACKHOLE){ lockedSet.add(r+","+c); } else { totalDrops++; letterCounts[L]=(letterCounts[L]||0)+1; } last={r,c}; flk.push(r+","+c);
+      if(sdActive() && sdTurn==="ai") sdAiCells.add(r+","+c); else sdAiCells.delete(r+","+c);
     }
     lastDrop=last; markLockFlash(flk);
     active=null;
@@ -2961,7 +3114,7 @@
   // Subsequent bricks rest on top of it; it ignores gravity until cleared in a word.
   // Lock the active brick in place at its CURRENT height (a floating platform).
   function lockActive(){
-    if(state!=="play"||!active||resolving) return;
+    if(state!=="play"||!active||resolving||(sdBlocked()&&!_sdAct)) return;
     if(active.ag){ agPlace(); return; }
     const land=landingRow();
     if(land<0) return;                       // column already full to the top
@@ -2974,6 +3127,7 @@
       const r=pr+dr, c=active.col+dc;
       if(r<0||r>=ROWS||c<0||c>=COLS||grid[r][c]!=null) continue;
       grid[r][c]=L; totalDrops++; letterCounts[L]=(letterCounts[L]||0)+1;
+      if(showdownOn && sdTurn==="ai") sdAiCells.add(r+","+c); else sdAiCells.delete(r+","+c);
       lockedSet.add(r+","+c); last={r,c}; flk.push(r+","+c);
     }
     lastDrop=last; markLockFlash(flk);
@@ -3027,6 +3181,7 @@
     found.words.forEach(w=>{ pts += w.length*w.length*10; });
     pts = Math.round(pts * level * mult);
     score += pts;
+    if(sdActive()){ if(sdTurn==="ai") aiScore += pts; else playerScore += pts; }   // Showdown: duel scoreboard
     updateHud();
 
     // telemetry: cascade depth (distinct from the combo streak), records
@@ -3067,7 +3222,7 @@
     _chainTimer=setTimeout(()=>{
       _chainTimer=0;
       found.cells.forEach(key=>{ const [rr,cc]=key.split(",").map(Number); grid[rr][cc]=null; lockedSet.delete(key); clearFeed.push(key); }); if(bhPower>0) popRandomHole(); if(brickedOn) popSentinels(found.words?found.words.length:1);
-      applyGravity();
+      sdPreGravity(); applyGravity(); sdPostGravity();
       renderStack();
       resolveBoard(true);           // chain continues the streak
     }, 240);
@@ -3104,18 +3259,74 @@
     return rl && !lr;
   }
   function showBonusBanner(on){ const b=$("bonusBar"); if(b) b.classList.toggle("show", !!on); }
-  function updateBonusBanner(){ const m=$("bonusMsg"); if(m) m.textContent="BONUS \u2014 choose your letters ("+bonusLeft+" left)"; }
+  function updateBonusBanner(){
+    const m=$("bonusMsg"); if(!m) return;
+    m.textContent = _sdBonusAI
+      ? ("\u{1F91D} AI BONUS \u2014 clearing "+bonusLeft+" brick"+(bonusLeft===1?"":"s")+" for you\u2026")
+      : ("BONUS \u2014 choose your letters ("+bonusLeft+" left)");
+  }
   function enterBonus(n){
     // stay in "play" so the stat panels, monitor and HUD keep rendering — gameplay simply
     // suspends because there's no active piece. bonusActive routes taps + blocks the fall/AI.
     bonusLeft=n; bonusActive=true; active=null; resolving=false;
     updateBonusBanner(); showBonusBanner(true);
+    // resolveBoard awards before spawn() flips the turn, so sdTurn is still the owner of the
+    // piece that made the word. The AI only claims the bonus it actually earned.
+    _sdBonusAI = coopOn && sdTurn==="ai";
+    if(_sdBonusAI){                               // Co-op AND the AI earned it -> the AI spends it
+      if(typeof toast==="function") toast("\u{1F91D} Backwards word! The AI is clearing "+n+" brick"+(n===1?"":"s")+" for you");
+      logEvent("bonus","coop AI takes +"+n); snapshot("bonus");
+      setTimeout(sdBonusStep, 520);
+      return;
+    }
     if(typeof toast==="function") toast("Backwards word! Delete up to "+n+" brick"+(n===1?"":"s"));
     logEvent("bonus","backwards +"+n); snapshot("bonus");
+  }
+  // CO-OP bonus: pick the brick whose removal helps you most. Never touches a near-complete
+  // cell's letters, prefers freeing your fragments and dropping the stack height.
+  function sdBonusPick(){
+    let best=null;
+    // Guard EVERY letter that forms part of a near-complete word -- not just the cells touching
+    // the gap. Removing the C from "C A _" kills CAT just as dead as removing the A.
+    const guards=new Set(), bag=(activeBag&&activeBag.length)?activeBag:BAG;
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+      if(grid[r][c]!=null) continue;
+      if(cellPotential(r,c)<=0) continue;
+      const seen={};
+      for(let i=0;i<bag.length;i++){ const ch=bag[i]; if(seen[ch]) continue; seen[ch]=1;
+        grid[r][c]=ch;
+        wordsThroughCell(r,c).forEach(cells=>cells.forEach(p=>{
+          if(!(p.r===r&&p.c===c)) guards.add(p.r+","+p.c);      // the whole word is protected
+        }));
+        grid[r][c]=null;
+      }
+    }
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+      const v=grid[r][c];
+      if(v==null || v===OBSTACLE || v===BLACKHOLE) continue;   // bonusDelete refuses blocks anyway
+      if(guards.has(r+","+c)) continue;                        // never break up your own fragment
+      const before=cellPotential(r,c-1)+cellPotential(r,c+1)+cellPotential(r-1,c)+cellPotential(r+1,c);
+      const keep=grid[r][c]; grid[r][c]=null;
+      const opened=cellPotential(r,c);                         // what YOU could do with the freed cell
+      grid[r][c]=keep;
+      const sc = opened*100 - before*10 + (ROWS-r)*3 - letterScore(v)*2 + Math.random()*4;
+      if(!best || sc>best.sc) best={r,c,sc,v,opened};
+    }
+    return best;
+  }
+  function sdBonusStep(){
+    if(!_sdBonusAI || !bonusActive){ return; }
+    if(bonusLeft<=0){ finishBonus(); return; }
+    const p=sdBonusPick();
+    if(!p){ finishBonus(); return; }              // nothing safe to take -> hand it back
+    _sdAct=true; try{ bonusDelete(p.r, p.c); }catch(_){ _sdAct=false; finishBonus(); return; } _sdAct=false;
+    try{ logEvent("bonus","AI cleared "+p.v+" @r"+p.r+"c"+p.c); }catch(_){}
+    if(bonusActive && bonusLeft>0) setTimeout(sdBonusStep, 420);
   }
   // tap a brick during the bonus → delete it with the normal clear visuals, then settle
   function bonusDelete(r,c){
     if(!bonusActive || bonusLeft<=0) return;
+    if(_sdBonusAI && !_sdAct) return;             // only locked while the AI spends the bonus IT earned
     if(r<0||r>=ROWS||c<0||c>=COLS || grid[r][c]==null) return;
     if(grid[r][c]===OBSTACLE || grid[r][c]===BLACKHOLE){ try{ showFlash("Sentinels can't be deleted"); }catch(_){} return; }   // immovable blocks are safe from the bonus delete
     const key=r+","+c, hue=140+rand(80);
@@ -3123,11 +3334,12 @@
     burst(c, r, "hsla("+hue+",90%,68%,", 8);
     emitHeat(new Set([key])); emitSmoke(new Set([key]));   // cooling-metal glow + smoke here too
     grid[r][c]=null; lockedSet.delete(key);
-    applyGravity(); renderStack();
+    sdPreGravity(); applyGravity(); sdPostGravity(); renderStack();
     bonusLeft--; updateBonusBanner();
     if(bonusLeft<=0) finishBonus();
   }
   function finishBonus(){
+    _sdBonusAI=false;
     showBonusBanner(false);
     bonusActive=false; resolving=false;
     // resume: spawn the piece we deferred when the bonus began
@@ -3421,10 +3633,142 @@
           active=prevA;
           if(!res || !res.heat) return "anticipation returned nothing";
           const hasA=("5,2" in res.heat), hasT=("5,3" in res.heat), hasC=("5,1" in res.heat);
-          if(!DICT.has("CAT")) return true;                    // dictionary variant without CAT; skip
+          if(!DICT.has("CAT")) return "dictionary is missing CAT \u2014 anticipation test cannot run";
           if(!(hasA&&hasT)) return "did not flag the A/T bricks of CAT (heat: "+Object.keys(res.heat).join(" ")+")";
           if(hasC) return "wrongly flagged the empty completing cell itself";
           return true;
+        } },
+      { name:"showdown AI spells when it can, blocks when it can't", group:"SHOWDOWN  \u00b7  seed "+bitSeed,
+        desc:"the adversarial AI takes any word it can complete, and otherwise keeps a dead letter away from the player's run",
+        fn:()=>{
+          const prevA=active, prevS=showdownOn, prevM=MINLEN;
+          try{
+            showdownOn=true; MINLEN=3;
+            // ---- 1) SPELL: build a real 3-letter word from the dictionary on the floor,
+            //      hand the AI its last letter, and require it to take SOME word.
+            let W=null; for(let g=0;g<300;g++){ const w=randWord(3); if(w.length===3){ W=w; break; } }
+            if(!W) return "could not draw a 3-letter word to test with";
+            mkBoard(8, 7);
+            const row=7, c0=2;
+            grid[row][c0]=W[0]; grid[row][c0+1]=W[1];             // e.g. "CA" with the T still to come
+            active={ letter:W[2], col:0, y:0, mate:null };
+            const spots=[]; for(let c=0;c<COLS;c++){ const r=landRowFor(c); if(r>=0 && sdHelp(r,c,W[2])>=1000) spots.push(c); }
+            if(!spots.length) return "scenario broken: no column completes "+W;
+            const got=sdPickCol(W[2]);
+            const gotR=landRowFor(got);
+            if(!(gotR>=0 && sdHelp(gotR,got,W[2])>=1000))
+              return "AI refused a word it could spell ("+W+": picked col "+got+", word cols were "+spots.join("/")+")";
+            // ---- 2) BLOCK: a letter that spells nothing must not be dumped beside the player's run.
+            mkBoard(8, 7);
+            grid[7][0]=W[0]; grid[7][1]=W[1];
+            let dead=null;
+            for(const L of "QZXJVKW"){ let any=false;
+              for(let c=0;c<COLS;c++){ const r=landRowFor(c); if(r>=0 && sdHelp(r,c,L)>=1000){ any=true; break; } }
+              if(!any){ dead=L; break; } }
+            if(!dead) return "scenario broken: no dead letter available";
+            active={ letter:dead, col:0, y:0, mate:null };
+            let best=-1e9, bestC=0;
+            for(let c=0;c<COLS;c++){ const r=landRowFor(c); if(r<0) continue;
+              const sc=-sdHelp(r,c,dead)*10 - demoNeighbours(r,c)*60;
+              if(sc>best){ best=sc; bestC=c; } }
+            const away=sdPickCol(dead), ar=landRowFor(away);
+            // Showdown is adversarial: sitting ON a cell that is one letter from finishing the
+            // player's word is the strongest move it has, so proximity to their run is only a
+            // fault when the cell is WORTHLESS to them (blocks nothing and spells nothing).
+            if(ar>=0 && cellPotential(ar,away)>0) return true;          // it took a real kill
+            if(ar>=0 && demoNeighbours(ar,away)>0 && demoNeighbours(landRowFor(bestC),bestC)===0)
+              return "AI dumped a dead letter ("+dead+") beside the player's run at col "+away+" without blocking anything";
+            return true;
+          } finally { active=prevA; showdownOn=prevS; MINLEN=prevM; }
+        } },
+      { name:"co-op never blocks or seals your setups, and completes them", group:"CO-OP  \u00b7  seed "+bitSeed,
+        desc:"with a near-complete fragment on the board: a dead letter must not sit on that cell nor bury it from above, and a completing letter must be played into it",
+        fn:()=>{
+          const prevA=active, prevS=showdownOn, prevC=coopOn, prevM=MINLEN, prevMode=sdMode;
+          try{
+            coopOn=true; showdownOn=false; sdMode="coop";
+            const LEN = 3 + rint(2);                       // 3 or 4 letter fragments
+            MINLEN = LEN;
+            let W=null; for(let g=0;g<300;g++){ const w=randWord(LEN); if(w && w.length===LEN){ W=w; break; } }
+            if(!W) return "could not draw a "+LEN+"-letter word to test with";
+            // lay the word with its LAST letter missing -> that gap is the player's setup
+            mkBoard(LEN+6, LEN+4);
+            const row=ROWS-1, c0=1, gap=c0+LEN-1, need=W[LEN-1];
+            for(let k=0;k<LEN-1;k++) grid[row][c0+k]=W[k];
+            if(cellPotential(row,gap) <= 0) return "setup void: no letter completes "+W+" at r"+row+"c"+gap;
+            // ---- 1) VETO: a letter that spells nothing must not take that cell ----
+            let dead=null;
+            for(const L of "QZXJVKWY"){ if(sdHelp(row,gap,L) < 1000){ dead=L; break; } }
+            if(!dead) return "scenario broken: no dead letter available";
+            active={ letter:dead, col:0, y:0, mate:null };
+            const c1=sdPickCol(dead), r1=(_sdPickRow>=0?_sdPickRow:landRowFor(c1));
+            if(c1===gap && r1===row) return "co-op SAT ON your setup ("+W+" gap r"+row+"c"+gap+") with a dead "+dead;
+            // ---- 2) SEAL: it must not bury the gap from above either ----
+            if(sdSeals(r1,c1,dead)) return "co-op SEALED your setup off (dead "+dead+" at r"+r1+"c"+c1+", gap r"+row+"c"+gap+")";
+            if(c1===gap && r1<row) return "co-op floated over your setup (r"+r1+"c"+c1+" above gap r"+row+"c"+gap+")";
+            // ---- 3) COMPLETE: when it HOLDS the finishing letter, it must play it there ----
+            active={ letter:need, col:0, y:0, mate:null };
+            if(sdHelp(row,gap,need) < 1000) return "setup void: "+need+" does not complete "+W;
+            const c2=sdPickCol(need), r2=(_sdPickRow>=0?_sdPickRow:landRowFor(c2));
+            // Behaviour, not coordinates: it must COMPLETE A WORD with that letter. Insisting on
+            // the exact gap would false-fail whenever an equal-or-better word exists elsewhere.
+            if(sdHelp(r2,c2,need) < 1000)
+              return "co-op REFUSED to finish "+W+" (held "+need+", played r"+r2+"c"+c2+" which spells nothing)";
+            // ---- 4) NO ADVERSARIAL RESIDUE: the float heuristic must be inert in co-op ----
+            active={ letter:dead, col:gap, y:0, mate:null };
+            const land=landRowFor(gap);
+            if(land>=1 && !coopOn) return "co-op flag lost during the run";
+            return true;
+          } finally { active=prevA; showdownOn=prevS; coopOn=prevC; MINLEN=prevM; sdMode=prevMode; }
+        } },
+      { name:"AI takes the highest-value word it can see", group:"LETTER VALUES  \u00b7  seed "+bitSeed,
+        desc:"with three real words completable by the same letter, the AI must choose the one worth the most \u2014 tested at a random word length with a random high/mid/low letter",
+        fn:()=>{
+          const prevA=active, prevS=showdownOn, prevM=MINLEN, prevMode=sdMode;
+          try{
+            showdownOn=true; sdMode="dual";
+            const LEN = 3 + rint(3);                       // 3, 4 or 5 letter words
+            MINLEN = LEN;
+            const TIER = [["E","T","A","O","I","N","S"],["D","L","C","U","M","W","F","G","Y","P"],["B","V","K","J","X","Q","Z"]][rint(3)];
+            // find a letter of that tier with >=3 distinct-value words of this length
+            let L=null, picks=null;
+            for(let a=0;a<TIER.length && !picks;a++){
+              const cand=TIER[(a+rint(TIER.length))%TIER.length];
+              const pool=[];
+              DICT.forEach(w=>{ if(w.length===LEN && w.indexOf(cand)>=0 && w.indexOf(cand)===w.lastIndexOf(cand)) pool.push(w); });
+              if(pool.length<3) continue;
+              const byVal=new Map();
+              pool.forEach(w=>{ const v=Math.round(wordValue(w)); if(!byVal.has(v)) byVal.set(v,w); });
+              const vals=[...byVal.keys()].sort((x,y)=>y-x);
+              if(vals.length<3) continue;
+              picks=[byVal.get(vals[0]), byVal.get(vals[Math.floor(vals.length/2)]), byVal.get(vals[vals.length-1])];
+              L=cand;
+            }
+            if(!picks) return "could not build a high/mid/low word set for this length";
+            // lay the three words on the floor, each missing L, with clear air above
+            const cols = picks.length*LEN + (picks.length-1);
+            mkBoard(LEN+6, cols);
+            const row=ROWS-1, slot=[];
+            picks.forEach((w,i)=>{ const c0=i*(LEN+1);
+              for(let k=0;k<LEN;k++){ if(w[k]===L){ slot.push({c:c0+k, w, v:Math.round(wordValue(w))}); continue; }
+                grid[row][c0+k]=w[k]; } });
+            if(slot.length!==picks.length) return "board setup failed (missing letter slots)";
+            active={ letter:L, col:0, y:0, mate:null };
+            // every slot must genuinely complete its word, or the scenario is void
+            for(const sl of slot){ if(sdHelp(row, sl.c, L) < 1000) return "setup void: "+sl.w+" does not complete at col "+sl.c; }
+            const best = slot.slice().sort((a,b)=>b.v-a.v)[0];
+            const got  = sdPickCol(L);
+            const gotR = landRowFor(got);
+            // It must COMPLETE A WORD. Note it can legitimately find a word the setup never
+            // seeded -- separated fragments can run together into one -- so judge behaviour,
+            // not the exact column.
+            if(!(gotR>=0 && sdHelp(gotR,got,L)>=1000))
+              return "AI took no word at all (letter "+L+", picked r"+gotR+"c"+got+", seeded word cols "+slot.map(x=>x.c).join("/")+")";
+            const hit = slot.find(x=>x.c===got);
+            if(hit && hit.v < best.v)
+              return "AI took a lesser seeded word: "+hit.w+" \u2605"+hit.v+" instead of "+best.w+" \u2605"+best.v+" (letter "+L+", len "+LEN+")";
+            return true;
+          } finally { active=prevA; showdownOn=prevS; MINLEN=prevM; sdMode=prevMode; }
         } },
       { name:"misspell flags near-words at multiple lengths", group:"MISSPELL  \u00b7  seed "+bitSeed,
         desc:"across shortest-word settings of 3, 4 and 5, a scramble of a real word is flagged red while the real word and gibberish are not",
@@ -3650,6 +3994,26 @@
     row(dangerPct>=75?"warn":"", "fill "+fillPct+"% · danger "+dangerPct+"% · tallest "+tallest+" · empty "+(total-filled)+" · locked "+lockedSet.size);
     row("dim", "obstacles "+_obs+" · black holes "+_holes+" · pull "+(bhPower===0?"off":bhPower===1?"contact":"1-cell"));
     { const mr=misspellOn?misspellRuns().length:0; row("dim", "misspell "+(misspellOn?"on":"off")+" · runs "+mr+" · chips "+_missChips.size+" · dismissed "+_missDismissed.size+" · minlen "+Math.max(2,MINLEN)+" · anagrams "+ANAGRAMS.size); }
+    if(sdActive()){
+      const d=_sdDbg, lead=(playerScore===aiScore)?"tied":(playerScore>aiScore?("you +"+(playerScore-aiScore)):("AI +"+(aiScore-playerScore)));
+      row("hdr", "\u2694 SHOWDOWN");
+      row("", "brain "+sdMode.toUpperCase()+" \u00b7 turn "+(sdTurn==="player"?"PLAYER":"AI")+" \u00b7 you "+playerScore+" \u00b7 ai "+aiScore+" \u00b7 "+lead);
+      row("dim", "moves "+_sdMoves+" \u00b7 spelled "+_sdSpells+" \u00b7 blocked "+_sdBlocks+" \u00b7 floats "+_sdFloats+" \u00b7 walled-in "+_sdStuck);
+      row("dim", "last "+(d.move?("#"+d.move+" "+d.letter+" col"+d.from+"\u2192"+d.to+" r"+d.row+" "+d.act+(d.spell?" SPELL":"")):"\u2014"));
+      row("dim", "score help "+d.help+" \u00b7 "+(sdMode==="coop"?"assist ":"deny ")+d.deny+" \u00b7 near "+d.near+" \u00b7 steer "+d.steer+" \u00b7 lift "+d.lifted+(d.blocked?" \u00b7 WALLED":"")+" \u00b7 "+d.ms+"ms");
+      row("dim", "cand "+(d.cand||"\u2014")+"   (W=word, W\u2191=shift-lock, x=unreachable)");
+      { const v=(_sdLog[0]&&_sdLog[0].seen)?_sdLog[0].seen:[];
+        const top=v.reduce((m,x)=>Math.max(m,x.v||0),0), uq=new Set(v.map(x=>x.w)).size;
+        row("dim", "vision "+uq+" word"+(uq===1?"":"s")+" / "+v.length+" spot"+(v.length===1?"":"s")+
+            " \u00b7 letter "+(d.letter||"-")+"="+(d.letter?letterScore(d.letter):0)+
+            " \u00b7 best \u2605"+top+" \u00b7 took \u2605"+(d.wval||0)+
+            ((d.spell)?((d.wval||0)>=top?" MAX":" NOT-MAX"):" \u2014"));
+        if(v.length){ const t=v.slice().sort((a,b)=>(b.v||0)-(a.v||0)).slice(0,4)
+          .map(x=>x.w+"\u2605"+(x.v||0)+"@r"+x.r+"c"+x.c).join("  ");
+          row("dim", "  top: "+t+(v.length>4?("  (+"+(v.length-4)+" more)"):"")); } }
+      row("dim", "reach "+(_sdDbg.reach||0)+" cells \u00b7 aiCells "+sdAiCells.size+" \u00b7 timer "+(_sdTimer?"on":"OFF")+" \u00b7 acting "+(_sdAct?"yes":"no")+" \u00b7 gate "+(sdBlocked()?"LOCKED":"open")+" \u00b7 soft "+(softDrop?"ON":"off")+" slow "+(slowFall?"ON":"off"));
+      if(d.err) row("bad", "AI ERROR: "+d.err);
+    }
     row("dim", "antic "+(_anticCells?("\u2192"+(_anticWord||"?")):"idle")+" · prox "+_anticProx.toFixed(2)+" · bricks "+_anticCells+" · vib "+(anticVibrate?"on":"off")+" heat "+(anticHeat?"on":"off")+" smoke "+(anticSmoke?"on":"off"));
     row("", COLS+"\u00d7"+ROWS+" · minlen "+MINLEN+" · dict "+DICT.size+" · bag "+activeBag.length+" letters"+(excluded.size?(" · excluded "+[...excluded].join("")):""));
 
@@ -3704,12 +4068,37 @@
     logEvent("gameover", (win?"WIN ":"")+reason); snapshot("gameover");
     state="over"; resolving=false; active=null; ghostEl.style.opacity=0; { const gr=document.getElementById("ghostRow"); if(gr) gr.style.opacity=0; }
     sOver();
-    const t=$("overTitle"); if(t) t.textContent = title || (win ? "Sentence complete \u2014 you win!" : "The depths took you");
-    $("finalScore").textContent=score;
-    $("finalWords").textContent=words;
-    $("finalLevel").textContent=level;
-    $("overMsg").textContent=reason+" You cleared "+words+(words===1?" word.":" words.");
-    $("overScreen").classList.remove("hide");
+    // Duel / co-op verdicts
+    let verdict="", vsub="", vcol="#9af1ff";
+    if(coopOn){
+      const team=playerScore+aiScore;
+      verdict="TEAM RUN OVER"; vcol="#7dd8ff";
+      vsub="Together you scored "+team+" \u00b7 you "+playerScore+" + AI "+aiScore+" \u00b7 "+words+(words===1?" word":" words");
+    } else if(showdownOn){
+      if(playerScore>aiScore){ verdict="YOU BEAT THE AI"; vcol="#7dffb0"; }
+      else if(aiScore>playerScore){ verdict="THE AI WINS"; vcol="#ff8a9c"; }
+      else { verdict="DEAD HEAT"; vcol="#ffd76a"; }
+      vsub="you "+playerScore+" \u00b7 AI "+aiScore+" \u00b7 "+words+(words===1?" word":" words");
+    } else {
+      verdict = title || (win ? "SENTENCE COMPLETE" : "THE DEPTHS TOOK YOU");
+      vcol = win ? "#7dffb0" : "#9af1ff";
+      vsub = "score "+score+" \u00b7 level "+level+" \u00b7 "+words+(words===1?" word":" words");
+    }
+    sdOverBanner(verdict, vsub, vcol, reason);
+  }
+  // The end of a run is drawn ON the board: the stack drains away and a slim banner
+  // slides across. No modal, nothing to dismiss -- the board itself tells you.
+  function sdOverBanner(title, sub, col, reason){
+    try{ const st=$("stack"); if(st) [...st.children].forEach((t,i)=>{
+      t.style.transition="transform .6s cubic-bezier(.4,0,.6,1) "+(i%9)*24+"ms, opacity .6s ease "+(i%9)*24+"ms";
+      t.style.transform="translateY("+(cell*2.2).toFixed(0)+"px) scale(.72) rotate("+((Math.random()*24-12)|0)+"deg)"; t.style.opacity="0"; }); }catch(_){}
+    let b=document.getElementById("overBanner");
+    if(!b){ b=document.createElement("div"); b.id="overBanner"; (document.getElementById("boardWrap")||document.body).appendChild(b); }
+    b.innerHTML='<div class="obT" style="color:'+col+'">'+title+'</div><div class="obS">'+sub+'</div>'+
+      '<div class="obR">'+(reason||"")+'</div><button class="obB" id="obAgain">Dive again</button>';
+    b.classList.remove("go"); void b.offsetWidth; b.classList.add("go");
+    const a=document.getElementById("obAgain");
+    if(a) a.addEventListener("click",()=>{ b.classList.remove("go"); const os=$("overScreen"); if(os) os.classList.add("hide"); startGame(); });
   }
 
   function updateHud(){
@@ -4357,7 +4746,8 @@
     if(realDt>maxFrame) maxFrame=realDt;
     if(realDt>120 && state==="play"){ longFrames++; logEvent("JANK", Math.round(realDt)+"ms frame"); }
     try{
-      drawDepth(dt); drawFx(dt); drawHeat(now); drawSmoke(dt); stepDebris(dt); drawBolts(now); drawSparks(now); drawTutor(now); updateMonitor(now); updateStats(now); updateAgClock(now); updateLandHint(); updateWordAnticipation();
+      drawDepth(dt); drawFx(dt); drawHeat(now); drawSmoke(dt); stepDebris(dt); drawBolts(now); drawSparks(now); drawTutor(now); updateMonitor(now); updateStats(now); updateAgClock(now); updateLandHint(); updateWordAnticipation(); recTick(now);
+      if(now-_sdUiT>80){ _sdUiT=now; sdBrain(); sdPanel(); }
       if(thunderstormOn && state==="play" && now>=_nextStormT){ ambientStrike(); _nextStormT=now+1400+Math.random()*2600; } // ambient thunderstorm
       if(state!=="play"||!active||resolving) return;
       if(active.ag){ agStep(dt);
@@ -4385,7 +4775,7 @@
   // ============================================================
   function bumpLock(){ lastMoveT = (typeof performance!=="undefined"?performance.now():Date.now()); }
   function move(dir){
-    if(state!=="play"||!active||resolving) return;
+    if(state!=="play"||!active||resolving||sdBlocked()) return;
     if(active.ag){ agNudge(dir,0); return; }
     if(active.mate){
       const nb=active.col+dir;
@@ -4417,12 +4807,12 @@
     }
   }
   function hardDrop(){
-    if(state!=="play"||!active||resolving) return;
+    if(state!=="play"||!active||resolving||(sdBlocked()&&!_sdAct)) return;
     if(active.ag){ agPlace(); return; }
     active.y=landingRow()*cell; positionActive(); lockPiece();
   }
-  function setSoft(v){ if(active&&active.ag){ if(v) agNudge(0,1); return; } softDrop=v; }
-  function setSlow(v){ if(active&&active.ag){ if(v) agNudge(0,-1); return; } slowFall=v; }
+  function setSoft(v){ if(v&&sdBlocked()) return; if(active&&active.ag){ if(v) agNudge(0,1); return; } softDrop=v; }   // NEVER gate the release, or it sticks on
+  function setSlow(v){ if(v&&sdBlocked()) return; if(active&&active.ag){ if(v) agNudge(0,-1); return; } slowFall=v; }   // NEVER gate the release, or it sticks on
   function applySpeed(){ cps=Math.min(2.2+(level-1)*0.4, 8)*speedMul; }
   function changeSpeed(dir){
     if(state!=="play") return;
@@ -4461,6 +4851,7 @@
   document.addEventListener("keyup",(e)=>{ if(e.key==="ArrowDown") setSoft(false); if(e.key==="ArrowUp") setSlow(false); if(e.key==="ArrowLeft"||e.key==="ArrowRight"){ heldArrows[e.key]=false; deleteFired=false; } });
 
   board.addEventListener("pointerdown",(e)=>{
+    if(sdBlocked()) return;                                // Showdown: hands off during the AI's turn
     if(bonusActive){                                       // backwards-bonus: tap a brick to delete it
       const rect=board.getBoundingClientRect();
       const c=Math.floor((e.clientX-rect.left)/cell);
@@ -4514,8 +4905,53 @@
   $("bSmoke").addEventListener("click",toggleSmoke);
   { const jb=$("bJumble"); if(jb) jb.addEventListener("click",doJumble); }
   { const bk=$("bBricked"); if(bk) bk.addEventListener("click",()=>{ brickedOn=!brickedOn; bk.textContent="Bricked: "+(brickedOn?"On":"Off"); bk.classList.toggle("on",brickedOn); }); }
-  { const lp=$("bLetterPrev"); if(lp) lp.addEventListener("click",()=>{ letterPreviewOn=!letterPreviewOn; lp.textContent="Letter Preview: "+(letterPreviewOn?"On":"Off"); lp.classList.toggle("on",letterPreviewOn); }); }
-  document.querySelectorAll(".anticopt").forEach(o=>{ o.addEventListener("click",e=>{ e.stopPropagation();
+  document.querySelectorAll("#bLetterPrev .anticopt").forEach(o=>{ o.addEventListener("click",e=>{ e.stopPropagation();
+    const lp=o.dataset.lp, on=!o.classList.contains("on"); o.classList.toggle("on",on);
+    if(lp==="cell") lpCell=on; else if(lp==="col") lpColumn=on;
+    const lpb=$("bLetterPrev"); if(lpb) lpb.classList.toggle("on", lpCell||lpColumn); }); });
+  { const lpb=$("bLetterPrev"), lpm=$("lpMenu");
+    if(lpb&&lpm){ lpb.addEventListener("click",e=>{ if(e.target.closest(".anticmenu")) return; lpm.classList.toggle("open"); });
+      document.addEventListener("click",e=>{ if(!lpb.contains(e.target)) lpm.classList.remove("open"); }); } }
+  { const sb=$("bShowdown"); if(sb) sb.addEventListener("click",toggleShowdown); }
+  { const bb=$("bBrain"); if(bb) bb.addEventListener("click",()=>{
+      sdBrainUI=!sdBrainUI;
+      sdFlush();                                  // either way: release everything and start clean
+      if(!sdBrainUI){ const el=document.getElementById("sdPanel"); if(el) el.remove(); }   // drop the whole panel
+      sdBrainBtn(); sdPanel();
+      try{ toast(sdBrainUI ? "\u{1F9E0} AI Brain UI on \u2014 restarted clean" : "\u{1F9E0} AI Brain UI off \u2014 capture stopped, memory freed"); }catch(_){}
+    }); }
+  { const cb=$("bCoop"); if(cb) cb.addEventListener("click",()=>{
+      coopOn=!coopOn;
+      if(coopOn){
+        if(showdownOn) toggleShowdown();            // the two are mutually exclusive
+        sdMode="coop"; sdTurn="ai"; _sdLast=null; _sdPlan=null;
+        playerScore=0; aiScore=0; sdAiCells.clear();
+        _sdMoves=_sdSpells=_sdBlocks=_sdFloats=_sdStuck=_sdMisses=0; _sdLog=[]; _sdVer++;
+        clearInterval(_sdTimer); _sdTimer=setInterval(sdTick,110);
+      } else {
+        sdMode="dual"; clearInterval(_sdTimer); _sdTimer=0;
+        sdAiCells.clear(); playerScore=0; aiScore=0; _sdLast=null; _sdPlan=null;
+      }
+      try{ renderStack(); }catch(_){}
+      sdCoopBtn(); sdModeBtn(); sdBadge(); sdScoreHud(); sdPanel();
+      try{ toast(coopOn ? "\u{1F91D} Co-op \u2014 the AI plays WITH you" : "Co-op off"); }catch(_){}
+    }); }
+  { const mb=$("bSdMode"); if(mb) mb.addEventListener("click",()=>{
+      sdMode = (sdMode==="dual") ? "spell" : (sdMode==="spell") ? "block" : "dual";
+      _sdPlan=null; _sdLast=null;                       // re-decide with the new brain
+      sdModeBtn();
+      try{ toast(sdMode==="dual" ? "AI brain: DUAL \u2014 spells when it can, blocks when it can't"
+                : sdMode==="spell" ? "AI brain: SPELL ONLY \u2014 chases words, ignores you"
+                : "AI brain: BLOCK ONLY \u2014 refuses to spell, pure denial"); }catch(_){}
+    }); }
+  { const sd=$("demoShowdown"); if(sd) sd.addEventListener("click",startShowdownDemo); }
+  { const rb=$("bRecord"), rm=$("recMenu");
+    if(rb&&rm){ rb.addEventListener("click",e=>{ if(e.target.closest(".anticmenu")) return; rm.classList.toggle("open"); });
+      document.addEventListener("click",e=>{ if(!rb.contains(e.target)) rm.classList.remove("open"); }); } }
+  document.querySelectorAll("#recMenu .anticopt").forEach(o=>{ o.addEventListener("click",e=>{ e.stopPropagation();
+    const a=o.dataset.rec;
+    if(a==="toggle") recToggle(); else if(a==="play") recPlay(); else if(a==="back") recBack(); else if(a==="flush") recFlush(); }); });
+  document.querySelectorAll("#bAntic .anticopt").forEach(o=>{ o.addEventListener("click",e=>{ e.stopPropagation();
     const fx=o.dataset.fx, on=!o.classList.contains("on"); o.classList.toggle("on",on);
     if(fx==="vib") anticVibrate=on; else if(fx==="smoke") anticSmoke=on; else if(fx==="heat") anticHeat=on; }); });
   { const bm=$("bMisspell"); if(bm) bm.addEventListener("click",()=>{ misspellOn=!misspellOn; bm.textContent="Misspell: "+(misspellOn?"On":"Off"); bm.classList.toggle("on",misspellOn); try{ renderStack(); }catch(_){} }); }
@@ -4589,6 +5025,828 @@
   $("bitDone").addEventListener("click",()=>{ const s=$("bitScreen"); if(s) s.classList.add("hide"); });
   $("wordsDone").addEventListener("click",closeWords);
 
+  // ============================================================
+  //  GAME RECORDER — bolt-on. Captures board frames while recording, replays them
+  //  on its own layer, and can flush every recorded byte from memory. Reads the grid
+  //  read-only; never touches clear/gravity/word-detection.
+  // ============================================================
+  let recOn=false, recFrames=[], recT=0, recPlaying=false, recCdT=0, recPrevState=null, recIdx=0, recStepT=0;
+  const REC_HZ=33, REC_MAX=27000;        // sample ~30x/sec (smooth), cap ~15 min of frames
+  let recT0=0, recWall=0, recSig="";     // playback clock + last-painted grid signature (diff paint)
+  function recSnap(){                     // one compact frame: the board + the falling piece
+    if(!recOn || !grid || !grid.length) return;
+    const rows=[]; for(let r=0;r<ROWS;r++){ let s=""; for(let c=0;c<COLS;c++) s+=(grid[r][c]==null?".":grid[r][c]); rows.push(s); }
+    recFrames.push({ t:Math.round(nowMs()), rows, cols:COLS, rws:ROWS,
+      a: active ? {L:active.letter, c:active.col, y:Math.round(active.y||0), x:Math.round(active.x||0), ag:!!active.ag} : null,
+      s:score, w:words, lv:level });
+    if(recFrames.length>REC_MAX) recFrames.shift();
+  }
+  function recTick(now){                  // sampler + playback stepper, driven by the main loop
+    if(recOn && !recPlaying && state==="play" && now-recT>=REC_HZ){ recT=now; recSnap(); }
+    const dot=$("recDot"); if(dot) dot.classList.toggle("show", recOn && !recPlaying);
+    if(!recPlaying || !recFrames.length) return;
+    // play on the RECORDING'S OWN CLOCK: find the two frames straddling "elapsed", then
+    // interpolate the falling piece between them so it glides exactly as it did live.
+    const elapsed = now - recWall + recT0;
+    while(recIdx < recFrames.length-1 && recFrames[recIdx+1].t <= elapsed) recIdx++;
+    const f=recFrames[recIdx], g=recFrames[recIdx+1];
+    let k=0; if(g && g.t>f.t) k=Math.max(0, Math.min(1, (elapsed-f.t)/(g.t-f.t)));
+    recPaint(f, g, k);
+    if(!g && elapsed >= f.t){ recStop(); return; }   // reached the end of the tape
+  }
+  function recPaint(f, g, k){             // draw a recorded frame on its own layer; the live board is untouched
+    let host=$("recLayer");
+    if(!host){ host=document.createElement("div"); host.id="recLayer";
+      host.style.cssText="position:absolute;inset:0;z-index:13;pointer-events:none;"; board.appendChild(host); recSig=""; }
+    if(!f) return;
+    const ins=tileInset(), sz=cell-ins*2;
+    // STATIC STACK: only rebuilt when the board actually changes, so tiles never re-trigger
+    // their drop animation (that re-trigger every step was the "flashing")
+    const sig=f.rows.join("|")+"@"+cell;
+    if(sig!==recSig){
+      recSig=sig;
+      let st=host.querySelector(".recStack");
+      if(!st){ st=document.createElement("div"); st.className="recStack"; st.style.cssText="position:absolute;inset:0;"; host.insertBefore(st, host.firstChild); }
+      st.innerHTML="";
+      for(let r=0;r<f.rows.length;r++) for(let c=0;c<f.rows[r].length;c++){
+        const ch=f.rows[r][c]; if(ch===".") continue;
+        const cls = ch===OBSTACLE?"obstacle":ch===BLACKHOLE?"blackhole":"rest";
+        const d=document.createElement("div"); d.className="tile "+cls;
+        d.style.animation="none";                       // no drop/pop replay — a recording, not a landing
+        d.style.left=(c*cell+ins)+"px"; d.style.top=(r*cell+ins)+"px";
+        d.style.width=sz+"px"; d.style.height=sz+"px"; d.style.fontSize=tileFont();
+        d.innerHTML='<span class="glyph">'+((ch===OBSTACLE||ch===BLACKHOLE)?"":ch)+'</span>';
+        st.appendChild(d);
+      }
+    }
+    // FALLING PIECE: one persistent tile, moved (not recreated) and interpolated between frames
+    let at=host.querySelector(".recActive");
+    if(!f.a){ if(at) at.remove(); return; }
+    if(!at){ at=document.createElement("div"); at.className="tile active recActive";
+      at.style.cssText+=";transition:none;animation:none;"; host.appendChild(at); }
+    let ax=f.a.ag?f.a.x:(f.a.c*cell), ay=f.a.y;
+    if(g && g.a && g.a.L===f.a.L){                      // same piece in the next frame -> glide between them
+      const gx=g.a.ag?g.a.x:(g.a.c*cell);
+      ax+=(gx-ax)*k; ay+=(g.a.y-ay)*k;
+    }
+    at.style.left=(ax+ins)+"px"; at.style.top=(ay+ins)+"px";
+    at.style.width=sz+"px"; at.style.height=sz+"px"; at.style.fontSize=tileFont();
+    const gl=at.querySelector(".glyph");
+    if(!gl) at.innerHTML='<span class="glyph">'+f.a.L+'</span>';
+    else if(gl.textContent!==f.a.L) gl.textContent=f.a.L;
+  }
+  function recClearLayer(){ const h=$("recLayer"); if(h) h.remove(); }
+  function recCountdown(secs, label, done){   // big centered board countdown, then run `done`
+    const el=$("recCount"); if(!el){ done&&done(); return; }
+    clearInterval(recCdT);
+    let n=secs; el.classList.add("show");
+    const paint=()=>{ el.innerHTML=n+'<small>'+label+'</small>'; };
+    paint(); try{ blip(880,0.06,"sine",0.09); }catch(_){}
+    recCdT=setInterval(()=>{
+      n--;
+      if(n<=0){ clearInterval(recCdT); recCdT=0; el.classList.remove("show"); el.innerHTML=""; try{ blip(1320,0.14,"triangle",0.12); }catch(_){} done&&done(); return; }
+      paint(); try{ blip(n<=3?660:440,0.05,"sine",0.07); }catch(_){}
+    }, 1000);
+  }
+  function recSetLabel(){                     // keep the menu's first row honest
+    const o=document.querySelector('#recMenu .anticopt[data-rec="toggle"]');
+    if(o){ o.textContent = recOn ? "Stop recording" : "Start recording"; o.classList.toggle("on", recOn); }
+    const b=$("bRecord"); if(b) b.classList.toggle("on", recOn||recPlaying);
+  }
+  function recToggle(){
+    recOn=!recOn;
+    if(recOn){ recT=0; try{ toast("\u23FA Recording \u2014 click Record \u203A Stop recording to end"); }catch(_){} }
+    else { try{ toast("\u23F9 Stopped \u2014 "+recFrames.length+" frames held in memory"); }catch(_){} }
+    recSetLabel();
+  }
+  function recPlay(){
+    if(!recFrames.length){ try{ toast("Nothing recorded yet"); }catch(_){} return; }
+    if(recPlaying) return;
+    recPrevState=state; if(state==="play"){ state="pause"; const b=$("bPause"); if(b) b.textContent="\u25B6"; }
+    recCountdown(20, "playback starts", ()=>{
+      recPlaying=true; recIdx=0; recSig=""; recT0=recFrames[0].t; recWall=nowMs(); recSetLabel();
+      try{ toast("\u25B6 Playing back "+recFrames.length+" frames"); }catch(_){}
+    });
+  }
+  function recStop(){                          // end playback, clear the replay layer
+    recPlaying=false; recClearLayer(); recSig=""; recSetLabel();
+  }
+  function recBack(){
+    clearInterval(recCdT); recCdT=0;
+    const el=$("recCount"); if(el){ el.classList.remove("show"); el.innerHTML=""; }
+    recStop();
+    recCountdown(20, "resuming your game", ()=>{
+      if(recPrevState==="play" || state==="pause"){ state="play"; lastT=0; const b=$("bPause"); if(b) b.textContent="\u23F8"; }
+      recPrevState=null;
+      try{ toast("Back in your game"); }catch(_){}
+    });
+  }
+  function recFlush(){                         // drop every recorded frame (recording only) and let GC reclaim it
+    const n=recFrames.length;
+    recStop(); recFrames.length=0; recFrames=[]; recIdx=0;
+    try{ toast(n?("\uD83E\uDDF9 Flushed "+n+" recorded frames"):"Nothing to flush"); }catch(_){}
+    recSetLabel();
+  }
+  // ============================================================
+  //  SHOWDOWN — you vs the AI, alternating turns (Main game). Bolt-on: it reuses the
+  //  existing AI helpers and the same public controls, and flips a turn flag on each
+  //  spawn. Core clear/gravity/word-detection untouched.
+  // ============================================================
+  let showdownOn=false, coopOn=false, sdTurn="player", _sdTimer=0, _sdLast=null, _sdSeen=0, _sdAct=false;
+  function sdActive(){ return showdownOn || coopOn; }   // Showdown OR Co-op drives the turn machinery
+  let playerScore=0, aiScore=0;   // Showdown: separate duel scores, credited to whoever cleared
+  let sdBrainUI=true;             // AI Brain UI master switch: off = no capture, no logging, no panel
+  let _sdBonusAI=false;           // true only when the AI itself earned the current backwards bonus
+  // ============================================================
+  //  LETTER VALUES  --  bolt-on scoring table. Derived from real English letter
+  //  frequency (E 12.70% ... Z 0.07%) on a log scale, normalised to 1..10: the rarer
+  //  the letter, the higher the score. Pure lookup; the engine never reads this.
+  // ============================================================
+  const LETTER_SCORE = { E:1, T:2, A:2, O:2, I:2, N:2, S:2, H:2, R:2, D:3, L:3,
+    C:4, U:4, M:4, W:4, F:4, G:4, Y:4, P:4, B:5, V:5, K:6, J:9, X:9, Q:9, Z:10 };
+  function letterScore(L){ return LETTER_SCORE[L] || 1; }
+  function wordValue(w){            // what a word is WORTH: rare letters + length
+    let v=0; for(let i=0;i<w.length;i++) v+=letterScore(w[i]);
+    return v * (1 + (w.length-1)*0.15);          // longer words compound their value
+  }
+  // The best word this placement would complete, and what it is worth.
+  function sdWordValue(r,c,L){
+    if(r<0||r>=ROWS||c<0||c>=COLS||grid[r][c]!=null) return {v:0,w:""};
+    grid[r][c]=L;
+    let best=0, bw="";
+    wordsThroughCell(r,c).forEach(cells=>{ const w=cells.map(p=>grid[p.r][p.c]).join("");
+      const v=wordValue(w); if(v>best){ best=v; bw=w; } });
+    grid[r][c]=null;
+    return {v:best, w:bw};
+  }
+  let sdMode="dual";              // dual | spell | block  -- isolates the two halves of the AI brain for testing
+  // Debug telemetry for Showdown: everything a dev needs when the duel misbehaves.
+  let _sdDbg={ move:0, letter:"", from:-1, to:-1, row:-1, act:"-", help:0, deny:0, near:0, spell:false,
+               cand:"", ms:0, steer:0, lifted:0, blocked:false, err:"" };
+  let _sdMoves=0, _sdSpells=0, _sdBlocks=0, _sdFloats=0, _sdStuck=0, _sdMisses=0;
+  let _sdLog=[];          // persistent decision history for the AI Brain panel   // _sdAct = the AI itself is acting
+  let sdAiCells=new Set();   // "r,c" bricks the AI placed in Showdown (drawn pink)
+  function sdBlocked(){ return sdActive() && sdTurn==="ai"; }   // player controls are dead on the AI's turn
+  // How badly a placement HELPS the player: the word it completes now, plus how much it
+  // sets one up (a letter dropped beside a run is ammunition). The AI minimises this.
+  function sdHelp(r,c,L){
+    if(r<0||r>=ROWS||c<0||c>=COLS||grid[r][c]!=null) return 0;
+    grid[r][c]=L;
+    let done=0; wordsThroughCell(r,c).forEach(cells=>{ if(cells.length>done) done=cells.length; });
+    grid[r][c]=null;
+    let setup=0;                                  // would ANY letter now finish a word through a neighbour cell?
+    const bag=(activeBag&&activeBag.length)?activeBag:BAG;
+    if(!done){
+      grid[r][c]=L;
+      const spots=[[r-1,c],[r+1,c],[r,c-1],[r,c+1]];
+      for(const [rr,cc] of spots){
+        if(rr<0||rr>=ROWS||cc<0||cc>=COLS||grid[rr][cc]!=null) continue;
+        for(let i=0;i<bag.length;i++){ grid[rr][cc]=bag[i];
+          const w=wordsThroughCell(rr,cc); grid[rr][cc]=null;
+          if(w.length){ setup++; break; } }
+      }
+      grid[r][c]=null;
+    }
+    return done*1000 + setup*40;                  // completing a word is far worse than merely enabling one
+  }
+  // Denial: how much scoring potential the player has around a cell. The AI prefers spots
+  // that DON'T hand them anything (low is good), so it starves their board.
+  function sdDenial(r,c){
+    let open=0; const bag=(activeBag&&activeBag.length)?activeBag:BAG;
+    for(const [rr,cc] of [[r-1,c],[r+1,c],[r,c-1],[r,c+1]]){
+      if(rr<0||rr>=ROWS||cc<0||cc>=COLS||grid[rr][cc]!=null) continue;
+      for(let i=0;i<bag.length;i++){ grid[rr][cc]=bag[i]; const w=wordsThroughCell(rr,cc); grid[rr][cc]=null;
+        if(w.length){ open++; break; } }
+    }
+    return open;
+  }
+  // CO-OP: the potential this placement CREATES minus the potential it CONSUMES.
+  // sdDenial only counts what sits near a cell; parking a dead letter on your golden cell
+  // scored well under that measure while actually destroying your setup. This nets it out.
+  function sdAssist(r,c,L){
+    const before = cellPotential(r,c);          // what YOU could have done with this very cell
+    if(r<0||r>=ROWS||c<0||c>=COLS||grid[r][c]!=null) return 0;
+    // Measure each neighbour BEFORE and AFTER: only the DELTA is the AI's doing. Counting the
+    // raw "after" rewarded it for parking beside a gap you already had -- which is how it ended
+    // up hovering over your M-N cell and calling that help.
+    const nb=[[r-1,c],[r+1,c],[r,c-1],[r,c+1]].filter(([rr,cc])=>rr>=0&&rr<ROWS&&cc>=0&&cc<COLS&&grid[rr][cc]==null);
+    let pre=0; nb.forEach(([rr,cc])=>{ pre += cellPotential(rr,cc); });
+    grid[r][c]=L;
+    let post=0; nb.forEach(([rr,cc])=>{ post += cellPotential(rr,cc); });
+    grid[r][c]=null;
+    return (post - pre) - before*2;             // potential CREATED, minus double for eating your cell
+  }
+  // Cheap FNV-ish hash of the board's contents. ~84 ops, versus the 104 dictionary scans a
+  // single cellPotential costs -- so it pays for itself many times over.
+  function _gridHash(){
+    let h=2166136261>>>0;
+    for(let r=0;r<ROWS;r++){ const row=grid[r]; if(!row) break;
+      for(let c=0;c<COLS;c++){ const v=row[c]; h^=(v==null?46:v.charCodeAt(0)); h=Math.imul(h,16777619)>>>0; } }
+    return (h ^ Math.imul(ROWS,31) ^ Math.imul(COLS,7) ^ Math.imul(MINLEN,131))>>>0;
+  }
+  let _cpHash=-1, _cpMap=new Map();
+  // How many different letters would complete a word if dropped in this empty cell.
+  // Memoised: sdSeals asks this for every cell, for every candidate -- ~250k dictionary scans
+  // per co-op move without a cache. Keyed on board CONTENT, so a hypothetical letter placed
+  // by sdAssist/sdSeals changes the hash and correctly misses the cache.
+  function cellPotential(r,c){
+    if(r<0||r>=ROWS||c<0||c>=COLS||grid[r][c]!=null) return 0;
+    const h=_gridHash();
+    if(h!==_cpHash){ _cpHash=h; _cpMap.clear(); }
+    const k=r*COLS+c;
+    const hit=_cpMap.get(k); if(hit!==undefined) return hit;
+    const bag=(activeBag&&activeBag.length)?activeBag:BAG; const seen={}; let n=0;
+    for(let i=0;i<bag.length;i++){ const ch=bag[i]; if(seen[ch]) continue; seen[ch]=1;
+      grid[r][c]=ch; if(wordsThroughCell(r,c).length) n++; grid[r][c]=null; }
+    _cpMap.set(k,n);
+    return n;
+  }
+  // The AI's column choice: bank its own words, else dodge the player's runs and deny them.
+  // Every cell the active brick can actually get to: it may fall (r+1) or slide sideways
+  // through empty cells. Without this the AI can target a pocket it can never enter.
+  function sdReach(){
+    const seen=new Set(); if(!active) return seen;
+    let r0=Math.max(0,Math.min(ROWS-1,Math.floor((active.y||0)/cell)));
+    let c0=Math.max(0,Math.min(COLS-1,active.ag?Math.floor((active.x||0)/cell):active.col));
+    while(r0<ROWS-1 && grid[r0] && grid[r0][c0]!=null) r0++;               // nudge out of a solid start
+    if(!grid[r0] || grid[r0][c0]!=null) return seen;
+    const q=[[r0,c0]]; seen.add(r0+","+c0);
+    while(q.length){ const [r,c]=q.shift();
+      const nb=[[r+1,c],[r,c-1],[r,c+1]];
+      for(const [rr,cc] of nb){
+        if(rr<0||rr>=ROWS||cc<0||cc>=COLS) continue;
+        const k=rr+","+cc; if(seen.has(k)) continue;
+        if(grid[rr][cc]!=null) continue;
+        seen.add(k); q.push([rr,cc]);
+      }
+    }
+    return seen;
+  }
+  let _sdDemo=false;      // Showdown demo: demoTick plays the player, sdTick plays the AI
+  let _sdPlan=null;       // decision made at SPAWN (max reach), executed after the pause
+  let _sdPickRow=-1;      // the row sdPickCol chose (may be ABOVE the landing row -> shift-lock)
+  // Sentinels and black holes are dead weight: they can never join a word, so a brick parked
+  // against them is a brick doing nothing. Counts the dead neighbours of a cell, plus a share
+  // for the dead cell it would rest on -- the AI avoids them UNLESS it is spelling.
+  function sdDeadWeight(r,c){
+    let dead=0;
+    for(const [rr,cc] of [[r-1,c],[r+1,c],[r,c-1],[r,c+1]]){
+      if(rr<0||rr>=ROWS||cc<0||cc>=COLS) continue;
+      const v=grid[rr][cc];
+      if(v===OBSTACLE||v===BLACKHOLE) dead++;
+    }
+    if(r<ROWS-1){ const below=grid[r+1][c]; if(below===OBSTACLE||below===BLACKHOLE) dead+=2; }  // resting ON one is worst
+    return dead;
+  }
+  function sdPickCol(L){
+    let bestCol=active?active.col:(COLS>>1), bestScore=-1e9, bestRow=-1; const _tbl=[];
+    const reach=sdReach(); _sdDbg.reach=reach.size;
+    for(let c=0;c<COLS;c++){
+      const land=landRowFor(c); if(land<0) continue;
+      // Evaluate the landing row AND every empty cell above it: the AI can shift-lock a brick
+      // mid-air, so a word tucked in a gap (T_T) is reachable even when the piece would fall past it.
+      let colBest=-1e9, colRow=land, colTag="";
+      for(let r=land; r>=0; r--){
+        if(grid[r][c]!=null) continue;
+        if(!reach.has(r+","+c)) continue;                 // cannot physically get there -> not a candidate
+        const help=sdHelp(r,c,L);
+        const near=demoNeighbours(r,c);
+        const air=(r<land) ? 1 : 0;                       // floating costs a little unless it spells
+        let sc;
+        const wv = (help>=1000) ? sdWordValue(r,c,L).v*14 : 0;   // rare-letter / long-word bonus
+        const dead = (help>=1000) ? 0 : sdDeadWeight(r,c)*45;     // shun dead blocks -- but never at the cost of a word
+        if(sdMode==="spell"){                             // SPELL ONLY: chase words, ignore denial entirely
+          sc = (help>=1000) ? (5000 + help*3 + wv - air*20)
+                            : (-(ROWS-r)*4 - dead - air*400 + Math.random()*8);
+        } else if(sdMode==="block"){                      // BLOCK ONLY: never spell; pure denial
+          sc = (help>=1000) ? (-9000 - air*400)
+                            : (-help*10 - near*60 - (ROWS-r)*4 - sdDenial(r,c)*35 - dead - air*400 + Math.random()*8);
+        } else if(sdMode==="coop"){                       // CO-OP: spell if it can, else SET YOU UP.
+          // HARD RULE first: if this cell is one letter away from finishing a word for you
+          // ("SUR" + E, "HI" + T/S/D/M/P), the AI must NEVER sit on it -- unless its own letter
+          // is the one that finishes it. A soft penalty was not enough: a cell only one letter
+          // could complete scored a feeble -2 and lost to board noise.
+          if(help>=1000){ sc = 5000 + help*3 + wv - air*20; }
+          else if(cellPotential(r,c) > 0){ sc = -1e6; }    // veto: never sit ON your setup
+          else if(sdSeals(r,c,L)){ sc = -1e6; }             // veto: never seal one off from above either
+          else { sc = (help*10 + sdAssist(r,c,L)*12 + near*20 - (ROWS-r)*4 - dead - air*400 + Math.random()*8); }
+        } else {                                          // DUAL: bank a word if there is one, else BLOCK
+          // Adversarial: sitting ON a cell that is one letter from finishing the player's word
+          // is the single most damaging move available. sdDenial only measured potential *near*
+          // a cell, so a "PI_" gap scored no better than empty space and went unblocked.
+          const kill = cellPotential(r,c);
+          sc = (help>=1000)
+            ? 5000 + help*3 + wv - air*20
+            : (kill>0 ? (3000 + kill*120 - air*30)      // take their setup off the board
+                      : (-help*10 - near*60 - (ROWS-r)*4 - sdDenial(r,c)*35 - dead - air*400 + Math.random()*8));
+        }
+        const _isW=(help>=1000 && sdMode!=="block");
+        if(sc>colBest){ colBest=sc; colRow=r; colTag=_isW?(air?"W\u2191":"W"):String(Math.round(sc)); }
+      }
+      if(colBest<=-1e9) { _tbl.push(c+":x"); continue; }   // unreachable column
+      if(colBest>bestScore){ bestScore=colBest; bestCol=c; bestRow=colRow; }
+      _tbl.push(c+":"+colTag);
+    }
+    _sdDbg.cand=_tbl.join(" ");
+    _sdPickRow=bestRow;
+    return bestCol;
+  }
+  // Should the AI float this brick instead of dropping it? Only when hanging it mid-air is
+  // LESS useful to the player than letting it land (a nasty overhang the player must build around).
+  function sdShouldFloat(col,L){
+    const land=landRowFor(col); if(land<1) return 0;
+    const landHelp=sdHelp(land,col,L);
+    for(let r=Math.max(0,land-3); r<land; r++){
+      if(grid[r][col]!=null) continue;
+      if(sdHelp(r,col,L) < landHelp && Math.random()<0.55) return r;   // hang it where it helps them less
+    }
+    return 0;
+  }
+  function sdScoreHud(){
+    const py=$("pillYou"), pa=$("pillAi");
+    if(py) py.style.display = sdActive() ? "" : "none";
+    if(pa) pa.style.display = sdActive() ? "" : "none";
+    if(!sdActive()) return;
+    const y=$("sdYou"), a=$("sdAi");
+    if(y) y.textContent=playerScore; if(a) a.textContent=aiScore;
+  }
+  // AI BRAIN: draw what the AI is aiming at, right on the board (debug surfaces only).
+  // Was a word available anywhere the brick could legally go? Used to catch real misses.
+  function sdBestWord(L){
+    const reach=sdReach(); let best=null;
+    for(let c=0;c<COLS;c++){ const land=landRowFor(c); if(land<0) continue;
+      for(let r=land;r>=0;r--){ if(grid[r][c]!=null) continue; if(!reach.has(r+","+c)) continue;
+        const h=sdHelp(r,c,L);
+        if(h>=1000 && (!best||h>best.help)){ grid[r][c]=L; const w=wordsThroughCell(r,c);
+          best={r,c,help:h,word:(w[0]||[]).map(p=>grid[p.r][p.c]).join("")}; grid[r][c]=null; } } }
+    return best;
+  }
+  function sdDump(){                 // plain-text log: paste this straight into a bug report
+    const L=[];
+    L.push("SPELLTRIS \u00b7 SHOWDOWN AI LOG");
+    L.push("mode="+gameMode+"  minlen="+MINLEN+"  dict="+DICT.size+"  board="+COLS+"x"+ROWS);
+    L.push("brain="+sdMode+"  turn="+sdTurn+"  you="+playerScore+"  ai="+aiScore+"  moves="+_sdMoves+"  spelled="+_sdSpells+"  blocked="+_sdBlocks+"  floats="+_sdFloats+"  walled="+_sdStuck+"  missed="+_sdMisses);
+    L.push("");
+    L.push("BOARD (top row first, '.'=empty, #=block, @=hole):");
+    try{ for(let r=0;r<ROWS;r++){ let row=""; for(let c=0;c<COLS;c++) row+=(grid[r][c]==null?".":grid[r][c]); L.push("  "+String(r).padStart(2," ")+" "+row); } }catch(e){ L.push("  <no board>"); }
+    L.push("");
+    L.push("AI DECISIONS (newest first) \u2014 cand: per-column score, W=word, W\u2191=word via shift-lock, x=unreachable");
+    if(!_sdLog.length) L.push("  <none yet>");
+    _sdLog.forEach(e=>{
+      L.push("  #"+e.n+"  letter="+e.L+"  col "+e.from+"->"+e.to+"  row="+e.row+"  act="+e.act+(e.blocked?"  WALLED":""));
+      L.push("      verdict="+(e.miss?("MISS "+e.miss):(e.spell?("SPELL "+(e.word||"")):((e.mode==="coop"?"assist ":"deny ")+e.deny))));
+      L.push("      help="+e.help+"  deny="+e.deny+"  reach="+e.reach+"  ms="+e.ms);
+      L.push("      cand="+(e.cand||"-"));
+      const g=e.guard||[];
+      if(g.length){ const adv=(e.mode!=="coop");
+        const hit=(!adv && e.spell) ? null : g.find(x=>x.r===e.row&&x.c===e.to);
+        L.push(adv
+          ? ("      THREAT "+g.length+" of THEIR near-complete cell(s)"+(hit?("  ** KILLED r"+hit.r+"c"+hit.c+" **"):(e.spell?"  (took a word instead)":"  ** LEFT ALIVE **")))
+          : ("      GUARD "+g.length+" near-complete cell(s)"+(hit?("  ** BLOCKED r"+hit.r+"c"+hit.c+" **"):(e.spell?"  (solved one)":"  (kept clear)"))));
+        g.slice(0,8).forEach(x=>{
+          L.push("         r"+x.r+"c"+x.c+"  fragment "+x.frag+"  could become "+x.n+":");
+          x.words.forEach(y=>L.push("            "+y.w+"  (needs "+y.L+")  value="+y.v));
+        }); }
+      const v=e.seen||[];
+      L.push("      SEES "+v.length+" word(s) with "+e.L+(v.length?":":""));
+      v.slice().sort((a,b)=>(b.v||0)-(a.v||0)).forEach(x=>{
+        const parts=[...x.w].map(ch=>ch+"="+letterScore(ch)).join("+");
+        const took=(e.spell && x.w===e.word && x.r===e.row && x.c===e.to);
+        L.push("        "+(took?">> ":"   ")+x.w+"  value="+(x.v||0)+"  ("+parts+")  @ r"+x.r+" c"+x.c+" "+(x.dir==="\u2194"?"horiz":"vert")+(x.air?" (needs shift-lock)":" (drop)"));
+      });
+    });
+    return L.join("\n");
+  }
+  function sdFallbackCopy(t,done){   // clipboard API can be blocked in file:// / iframes
+    try{ const ta=document.createElement("textarea"); ta.value=t;
+      ta.style.cssText="position:fixed;left:-9999px;top:0;"; document.body.appendChild(ta);
+      ta.select(); document.execCommand("copy"); ta.remove(); done&&done();
+    }catch(e){ try{ window.prompt("Copy the log below (Ctrl+C, Enter):", t); done&&done(); }catch(_){} }
+  }
+  let _sdPanelVer=-1, _sdVer=0;      // rebuild the list only when it actually changes
+  // Clear = a real flush. Every log entry carries its own vision + guard arrays (each word,
+  // each fragment), so dropping the array is not enough on its own: null the live references,
+  // empty the caches, and blank the DOM so the browser can actually reclaim it all.
+  function sdFlush(){
+    _sdLog.forEach(e=>{ e.seen=null; e.guard=null; e.cand=null; });   // break refs held by entries
+    _sdLog.length=0; _sdLog=[];
+    _sdMisses=0; _sdMoves=_sdSpells=_sdBlocks=_sdFloats=_sdStuck=0;
+    if(_sdPlan){ _sdPlan.seen=null; _sdPlan.guard=null; } _sdPlan=null; _sdLast=null;
+    _sdDbg={ move:0, letter:"", from:-1, to:-1, row:-1, act:"-", help:0, deny:0, near:0, spell:false,
+             cand:"", ms:0, steer:0, lifted:0, blocked:false, err:"", word:"", wval:0, miss:"", reach:0 };
+    _cpMap.clear(); _cpHash=-1; _gdList=null; _gdHash=-1;      // potential + guard caches
+    _sdSnap=null;
+    const list=document.getElementById("sdList"); if(list) list.innerHTML="";   // release the DOM nodes
+    const br=document.getElementById("sdBrain"); if(br){ br.remove(); _sbSig=""; }
+    _sdPanelVer=-1; _sdVer++;
+    sdPanel();
+    try{ toast("\u{1F9F9} AI Brain log flushed"); }catch(_){}
+  }
+  function sdPanel(){
+    let el=document.getElementById("sdPanel");
+    if(!sdActive() || !sdBrainUI){ if(el) el.style.display="none"; return; }   // tied to Showdown/Co-op itself, not the debug toggles
+    if(!el){
+      el=document.createElement("div"); el.id="sdPanel";
+      // shell is built ONCE so the buttons survive; a per-frame innerHTML rebuild would
+      // destroy them between mousedown and mouseup and swallow the click.
+      el.innerHTML='<div class="sdtitle"><span>\u2694 AI BRAIN</span><span class="dim" id="sdStat" style="margin-right:auto"></span>'+
+        '<button id="sdCopy">copy</button><button id="sdClear">clear</button></div><div id="sdList"></div>';
+      document.body.appendChild(el);
+      const b=document.getElementById("sdClear");
+      if(b) b.addEventListener("click",e=>{ e.stopPropagation(); sdFlush(); });
+      const cp=document.getElementById("sdCopy");
+      if(cp) cp.addEventListener("click",e=>{ e.stopPropagation(); const t=sdDump();
+        const done=()=>{ cp.textContent="copied!"; setTimeout(()=>{ cp.textContent="copy"; },1200); };
+        if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(done,()=>sdFallbackCopy(t,done)); }
+        else sdFallbackCopy(t,done); });
+      _sdPanelVer=-1;
+    }
+    el.style.display="block";
+    const st=document.getElementById("sdStat");
+    if(st) st.textContent=" \u00b7 "+sdMode.toUpperCase()+" \u00b7 you "+playerScore+" / ai "+aiScore+" \u00b7 spelled "+_sdSpells+" \u00b7 missed "+_sdMisses;
+    if(_sdPanelVer===_sdVer) return;                 // nothing new -> leave the DOM (and the buttons) alone
+    _sdPanelVer=_sdVer;
+    const list=document.getElementById("sdList"); if(!list) return;
+    list.innerHTML=_sdLog.map(e=>{
+      const tag = e.miss ? '<b class="bad">MISS '+e.miss+'</b>'
+               : e.spell ? '<b class="good">SPELL '+(e.word||"")+(e.wval?' \u2605'+e.wval:'')+'</b>'
+               : '<span class="dim">'+(e.mode==="coop"?("assist "+e.deny):("deny "+e.deny))+'</span>';
+      return '<div class="sdrow"><div class="sdhead">#'+e.n+' <b>'+e.L+'</b> c'+e.from+'\u2192c'+e.to+' r'+e.row+
+             ' <span class="dim">'+e.act+(e.blocked?" WALLED":"")+'</span> '+tag+'</div>'+
+             '<div class="sdsub">help '+e.help+' \u00b7 '+(e.mode==="coop"?"assist ":"deny ")+e.deny+' \u00b7 reach '+e.reach+' \u00b7 '+e.ms+'ms</div>'+
+             '<div class="sdsub">cand '+(e.cand||"\u2014")+'</div>'+
+             (function(){ const g=e.guard||[];
+               if(!g.length) return '';
+               const adv=(e.mode!=="coop");                       // Showdown reads these as TARGETS, not sanctuaries
+               const hit=(!adv && e.spell) ? null : g.find(x=>x.r===e.row&&x.c===e.to);
+               const rows=g.slice(0,5).map(x=>{
+                 const bad=(hit&&hit.r===x.r&&hit.c===x.c);
+                 const used=(e.spell && x.r===e.row && x.c===e.to);
+                 const ws=x.words.map(y=>'<span class="gw">'+y.w+'</span><span class="gl">('+y.L+')\u2605'+y.v+'</span>').join(' ');
+                 const mark = adv ? (bad?' <b class="ok">\u2190 KILLED \u2713</b>':'') 
+                                  : (bad?' <b class="bad">\u2190 BLOCKED</b>':(used?' <b class="ok">\u2190 SOLVED IT \u2713</b>':''));
+                 const cls  = adv ? (bad?' ok':'') : (bad?' bad':(used?' ok':''));
+                 return '<div class="gdrow'+cls+'"><span class="gc">r'+x.r+'c'+x.c+'</span> <b class="gf">'+x.frag+'</b> '+
+                        '<span class="gn">could be '+x.n+':</span> '+ws+mark+'</div>'; }).join('');
+               const hd = adv
+                 ? ('THREAT \u00b7 '+g.length+' of THEIR near-complete cell'+(g.length===1?'':'s')+
+                    (hit?' \u00b7 <b class="ok">KILLED r'+hit.r+'c'+hit.c+' \u2713</b>':(e.spell?' \u00b7 <b class="ok">took a word instead</b>':' \u00b7 <b class="bad">LEFT ALIVE \u2717</b>')))
+                 : ('GUARD \u00b7 '+g.length+' near-complete cell'+(g.length===1?'':'s')+
+                    (hit?' \u00b7 <b class="bad">BLOCKED r'+hit.r+'c'+hit.c+'</b>':(e.spell?' \u00b7 <b class="ok">solved one \u2713</b>':' \u00b7 <b class="ok">kept clear \u2713</b>')));
+               return '<div class="sdgd'+(adv?' adv':'')+'"><div class="gdhd">'+hd+'</div>'+
+                      rows+(g.length>5?('<div class="gn">+'+(g.length-5)+' more</div>'):'')+'</div>';
+             })()+
+             (function(){ const v=e.seen||[];
+               if(!v.length) return '<div class="sdsee">sees 0 words with '+e.L+'</div>';
+               const list=v.slice().sort((a,b)=>(b.v||0)-(a.v||0)).map(x=>{
+                 const took = e.spell && x.w===e.word && x.r===e.row && x.c===e.to;
+                 const math=[...x.w].map(ch=>ch+'<i>'+letterScore(ch)+'</i>').join('+');
+                 const mult=(x.w.length>1)?(' \u00d7'+(1+(x.w.length-1)*0.15).toFixed(2)):'';
+                 return '<div class="swrow'+(took?' tk':'')+'">'+(took?'<b class="tkm">\u25B8 TAKES</b> ':'<span class="skm">\u00b7</span> ')+
+                        '<span class="'+(took?"swp":"sw")+'">'+x.w+'</span>'+
+                        '<span class="sm">'+math+mult+'</span>'+
+                        '<span class="sv">= \u2605'+(x.v||0)+'</span>'+
+                        '<span class="sl">@r'+x.r+'c'+x.c+x.dir+(x.air?" shift-lock":"")+'</span></div>'; }).join('');
+               const top=v.reduce((m,x)=>Math.max(m,x.v||0),0);
+               const uniq=new Set(v.map(x=>x.w)).size;
+               return '<div class="sdsee"><div class="seehd">VISION \u00b7 letter <b>'+e.L+'</b> (worth '+letterScore(e.L)+') \u00b7 '+
+                      uniq+' word'+(uniq===1?"":"s")+' completable \u00b7 '+v.length+' placement'+(v.length===1?"":"s")+
+                      ' \u00b7 best \u2605'+top+(e.spell?(' \u00b7 took \u2605'+(e.wval||0)+((e.wval||0)>=top?' \u2713 MAX':' \u2717 NOT MAX')):' \u00b7 no word taken')+'</div>'+list+'</div>';
+             })()+'</div>';
+    }).join("") || '<div class="sdsub">waiting for the AI to move\u2026</div>';
+  }
+  let _sdUiT=0, _sbSig="";
+  // Every word the AI can see right now with the letter in hand: each reachable empty cell,
+  // every word that placing the letter there would complete. No cap, no dedupe by row/col.
+  // CO-OP: the player's near-complete cells -- empty spots where some letter finishes a word.
+  // The AI must not sit on these. Reported so you can see what it is protecting.
+  // Which cells can a falling brick still get to? Flood from every open top cell.
+  function sdReachFromTop(){
+    const seen=new Set(), q=[];
+    for(let c=0;c<COLS;c++){ if(grid[0] && grid[0][c]==null){ seen.add("0,"+c); q.push([0,c]); } }
+    while(q.length){ const [r,c]=q.shift();
+      for(const [rr,cc] of [[r+1,c],[r,c-1],[r,c+1]]){
+        if(rr<0||rr>=ROWS||cc<0||cc>=COLS) continue;
+        const k=rr+","+cc; if(seen.has(k)||grid[rr][cc]!=null) continue;
+        seen.add(k); q.push([rr,cc]);
+      }
+    }
+    return seen;
+  }
+  // CO-OP: would dropping L at (r,c) cut off ANY near-complete cell? Sitting on your cell is
+  // only half the crime -- floating directly above it seals it just as dead.
+  let _gdHash=-1, _gdList=null;
+  function _guardList(){                          // every near-complete cell, cached per board state
+    const h=_gridHash();
+    if(h===_gdHash && _gdList) return _gdList;
+    _gdHash=h; _gdList=[];
+    for(let gr=0;gr<ROWS;gr++)for(let gc=0;gc<COLS;gc++){
+      if(grid[gr][gc]!=null) continue;
+      if(cellPotential(gr,gc)>0) _gdList.push(gr+","+gc);
+    }
+    return _gdList;
+  }
+  function sdSeals(r,c,L){
+    if(r<0||r>=ROWS||c<0||c>=COLS||grid[r][c]!=null) return false;
+    const self=r+","+c;
+    const guards=_guardList().filter(k=>k!==self);
+    if(!guards.length) return false;
+    const before=sdReachFromTop();
+    const live=guards.filter(k=>before.has(k));
+    if(!live.length) return false;
+    grid[r][c]=L;
+    const after=sdReachFromTop();
+    grid[r][c]=null;
+    return live.some(k=>!after.has(k));         // a reachable setup just became unreachable
+  }
+  function sdGuarded(){
+    const out=[], bag=(activeBag&&activeBag.length)?activeBag:BAG;
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+      if(grid[r][c]!=null) continue;
+      const words=[], seen={};
+      for(let i=0;i<bag.length;i++){ const ch=bag[i]; if(seen[ch]) continue; seen[ch]=1;
+        grid[r][c]=ch;
+        wordsThroughCell(r,c).forEach(cells=>{
+          const w=cells.map(p=>grid[p.r][p.c]).join("");
+          if(!words.some(x=>x.w===w)) words.push({ w, L:ch, v:Math.round(wordValue(w)) });
+        });
+        grid[r][c]=null;
+      }
+      if(words.length){ words.sort((a,b)=>b.v-a.v);
+        // the fragment already on the board, e.g. "HI" for HIT/HIS/HID
+        let frag=""; const best=words[0];
+        for(let k=0;k<best.w.length;k++){ if(best.w[k]!==best.L || frag.length!==best.w.indexOf(best.L)) frag+=best.w[k]; }
+        frag=best.w.split(best.L).join("\u2022");
+        out.push({ r, c, n:words.length, frag, words });
+      }
+    }
+    return out.sort((a,b)=>b.n-a.n);
+  }
+  function sdSeenWords(L){
+    const out=[];
+    if(!active || L===OBSTACLE || L===BLACKHOLE) return out;
+    const reach=sdReach();
+    for(let c=0;c<COLS;c++){
+      const land=landRowFor(c); if(land<0) continue;
+      for(let r=land;r>=0;r--){
+        if(grid[r][c]!=null) continue;
+        if(!reach.has(r+","+c)) continue;
+        grid[r][c]=L;
+        const ws=wordsThroughCell(r,c);
+        ws.forEach(cells=>{
+          const w=cells.map(p=>grid[p.r][p.c]).join("");
+          const horiz=cells.length>1 && cells[0].r===cells[1].r;
+          out.push({ w, r, c, air:(r<land)?1:0, dir:horiz?"\u2194":"\u2195", v:Math.round(wordValue(w)) });
+        });
+        grid[r][c]=null;
+      }
+    }
+    return out;
+  }
+  // ON-BOARD AI TARGET OVERLAY -- REMOVED.
+  // This drew a dashed box + letter on the cell the AI was aiming at. It rendered a phantom
+  // letter over the board (green when spelling, red when denying) and was more confusing than
+  // useful; the AI Brain panel already reports the target as text. The function is kept as a
+  // teardown-only stub so any element left over from an older session is cleaned up.
+  function sdBrain(){
+    const h=document.getElementById("sdBrain");
+    if(h) h.remove();
+    _sbSig="";
+  }
+  function sdPanel(){
+    let el=document.getElementById("sdPanel");
+    if(!sdActive() || !sdBrainUI){ if(el) el.style.display="none"; return; }   // tied to Showdown/Co-op itself, not the debug toggles
+    if(!el){
+      el=document.createElement("div"); el.id="sdPanel";
+      // shell is built ONCE so the buttons survive; a per-frame innerHTML rebuild would
+      // destroy them between mousedown and mouseup and swallow the click.
+      el.innerHTML='<div class="sdtitle"><span>\u2694 AI BRAIN</span><span class="dim" id="sdStat" style="margin-right:auto"></span>'+
+        '<button id="sdCopy">copy</button><button id="sdClear">clear</button></div><div id="sdList"></div>';
+      document.body.appendChild(el);
+      const b=document.getElementById("sdClear");
+      if(b) b.addEventListener("click",e=>{ e.stopPropagation(); sdFlush(); });
+      const cp=document.getElementById("sdCopy");
+      if(cp) cp.addEventListener("click",e=>{ e.stopPropagation(); const t=sdDump();
+        const done=()=>{ cp.textContent="copied!"; setTimeout(()=>{ cp.textContent="copy"; },1200); };
+        if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(done,()=>sdFallbackCopy(t,done)); }
+        else sdFallbackCopy(t,done); });
+      _sdPanelVer=-1;
+    }
+    el.style.display="block";
+    const st=document.getElementById("sdStat");
+    if(st) st.textContent=" \u00b7 "+sdMode.toUpperCase()+" \u00b7 you "+playerScore+" / ai "+aiScore+" \u00b7 spelled "+_sdSpells+" \u00b7 missed "+_sdMisses;
+    if(_sdPanelVer===_sdVer) return;                 // nothing new -> leave the DOM (and the buttons) alone
+    _sdPanelVer=_sdVer;
+    const list=document.getElementById("sdList"); if(!list) return;
+    list.innerHTML=_sdLog.map(e=>{
+      const tag = e.miss ? '<b class="bad">MISS '+e.miss+'</b>'
+               : e.spell ? '<b class="good">SPELL '+(e.word||"")+(e.wval?' \u2605'+e.wval:'')+'</b>'
+               : '<span class="dim">'+(e.mode==="coop"?("assist "+e.deny):("deny "+e.deny))+'</span>';
+      return '<div class="sdrow"><div class="sdhead">#'+e.n+' <b>'+e.L+'</b> c'+e.from+'\u2192c'+e.to+' r'+e.row+
+             ' <span class="dim">'+e.act+(e.blocked?" WALLED":"")+'</span> '+tag+'</div>'+
+             '<div class="sdsub">help '+e.help+' \u00b7 '+(e.mode==="coop"?"assist ":"deny ")+e.deny+' \u00b7 reach '+e.reach+' \u00b7 '+e.ms+'ms</div>'+
+             '<div class="sdsub">cand '+(e.cand||"\u2014")+'</div>'+
+             (function(){ const g=e.guard||[];
+               if(!g.length) return '';
+               const hit=e.spell ? null : g.find(x=>x.r===e.row&&x.c===e.to);   // completing a guarded cell is the goal, not a block
+               const rows=g.slice(0,5).map(x=>{
+                 const bad=(hit&&hit.r===x.r&&hit.c===x.c);
+                 const used=(e.spell && x.r===e.row && x.c===e.to);
+                 const ws=x.words.map(y=>'<span class="gw">'+y.w+'</span><span class="gl">('+y.L+')\u2605'+y.v+'</span>').join(' ');
+                 return '<div class="gdrow'+(bad?' bad':(used?' ok':''))+'"><span class="gc">r'+x.r+'c'+x.c+'</span> <b class="gf">'+x.frag+'</b> '+
+                        '<span class="gn">could be '+x.n+':</span> '+ws+(bad?' <b class="bad">\u2190 BLOCKED</b>':(used?' <b class="ok">\u2190 SOLVED IT \u2713</b>':''))+'</div>'; }).join('');
+               return '<div class="sdgd"><div class="gdhd">GUARD \u00b7 '+g.length+' near-complete cell'+(g.length===1?'':'s')+
+                      (hit?' \u00b7 <b class="bad">BLOCKED r'+hit.r+'c'+hit.c+'</b>':(e.spell?' \u00b7 <b class="ok">solved one \u2713</b>':' \u00b7 <b class="ok">kept clear \u2713</b>'))+'</div>'+
+                      rows+(g.length>5?('<div class="gn">+'+(g.length-5)+' more</div>'):'')+'</div>';
+             })()+
+             (function(){ const v=e.seen||[];
+               if(!v.length) return '<div class="sdsee">sees 0 words with '+e.L+'</div>';
+               const list=v.slice().sort((a,b)=>(b.v||0)-(a.v||0)).map(x=>{
+                 const took = e.spell && x.w===e.word && x.r===e.row && x.c===e.to;
+                 const math=[...x.w].map(ch=>ch+'<i>'+letterScore(ch)+'</i>').join('+');
+                 const mult=(x.w.length>1)?(' \u00d7'+(1+(x.w.length-1)*0.15).toFixed(2)):'';
+                 return '<div class="swrow'+(took?' tk':'')+'">'+(took?'<b class="tkm">\u25B8 TAKES</b> ':'<span class="skm">\u00b7</span> ')+
+                        '<span class="'+(took?"swp":"sw")+'">'+x.w+'</span>'+
+                        '<span class="sm">'+math+mult+'</span>'+
+                        '<span class="sv">= \u2605'+(x.v||0)+'</span>'+
+                        '<span class="sl">@r'+x.r+'c'+x.c+x.dir+(x.air?" shift-lock":"")+'</span></div>'; }).join('');
+               const top=v.reduce((m,x)=>Math.max(m,x.v||0),0);
+               const uniq=new Set(v.map(x=>x.w)).size;
+               return '<div class="sdsee"><div class="seehd">VISION \u00b7 letter <b>'+e.L+'</b> (worth '+letterScore(e.L)+') \u00b7 '+
+                      uniq+' word'+(uniq===1?"":"s")+' completable \u00b7 '+v.length+' placement'+(v.length===1?"":"s")+
+                      ' \u00b7 best \u2605'+top+(e.spell?(' \u00b7 took \u2605'+(e.wval||0)+((e.wval||0)>=top?' \u2713 MAX':' \u2717 NOT MAX')):' \u00b7 no word taken')+'</div>'+list+'</div>';
+             })()+'</div>';
+    }).join("") || '<div class="sdsub">waiting for the AI to move\u2026</div>';
+  }
+  // Every word the AI can see right now with the letter in hand: each reachable empty cell,
+  // every word that placing the letter there would complete. No cap, no dedupe by row/col.
+  // CO-OP: the player's near-complete cells -- empty spots where some letter finishes a word.
+  // The AI must not sit on these. Reported so you can see what it is protecting.
+  // Which cells can a falling brick still get to? Flood from every open top cell.
+  function sdReachFromTop(){
+    const seen=new Set(), q=[];
+    for(let c=0;c<COLS;c++){ if(grid[0] && grid[0][c]==null){ seen.add("0,"+c); q.push([0,c]); } }
+    while(q.length){ const [r,c]=q.shift();
+      for(const [rr,cc] of [[r+1,c],[r,c-1],[r,c+1]]){
+        if(rr<0||rr>=ROWS||cc<0||cc>=COLS) continue;
+        const k=rr+","+cc; if(seen.has(k)||grid[rr][cc]!=null) continue;
+        seen.add(k); q.push([rr,cc]);
+      }
+    }
+    return seen;
+  }
+  // Showdown keeps its own pink-brick ownership in step WITHOUT touching applyGravity:
+  // snapshot the AI's cells by value before gravity, re-derive them after. Pure bolt-on.
+  let _sdSnap=null;
+  function sdPreGravity(){
+    if(!sdActive() || !sdAiCells.size || !grid || !grid.length){ _sdSnap=null; return; }
+    _sdSnap=[]; for(let c=0;c<COLS;c++){ const col=[];
+      for(let r=0;r<ROWS;r++){ if(grid[r][c]!=null) col.push({v:grid[r][c], ai:sdAiCells.has(r+","+c)}); }
+      _sdSnap.push(col); }
+  }
+  function sdPostGravity(){
+    if(!_sdSnap) return;
+    const keep=new Set();
+    for(let c=0;c<COLS;c++){ const col=[];
+      for(let r=0;r<ROWS;r++){ if(grid[r][c]!=null) col.push(r); }
+      const src=_sdSnap[c]||[];
+      // gravity preserves each column's order, so the nth brick now is the nth brick before
+      for(let i=0;i<col.length && i<src.length;i++){ if(src[i].ai) keep.add(col[i]+","+c); }
+    }
+    sdAiCells.clear(); keep.forEach(k=>sdAiCells.add(k));
+    _sdSnap=null;
+  }
+  function sdBrainBtn(){
+    const b=$("bBrain"); if(!b) return;
+    b.style.display = sdActive() ? "" : "none";
+    b.textContent = "Brain: "+(sdBrainUI?"On":"Off");
+    b.classList.toggle("on", sdActive() && sdBrainUI);
+  }
+  function sdCoopBtn(){
+    const b=$("bCoop"); if(!b) return;
+    const on = coopOn;
+    b.textContent="Co-op: "+(on?"On":"Off"); b.classList.toggle("on",on);
+  }
+  function sdModeBtn(){
+    const b=$("bSdMode"); if(!b) return;
+    b.style.display = (showdownOn && !coopOn) ? "" : "none";
+    b.textContent = "AI: "+(sdMode==="dual"?"Dual":sdMode==="spell"?"Spell only":"Block only");
+    b.classList.toggle("on", showdownOn && sdMode!=="dual");
+  }
+  function sdBadge(){
+    let b=$("sdBadge");
+    if(!sdActive()){ if(b) b.style.display="none"; return; }
+    if(!b){ b=document.createElement("div"); b.id="sdBadge"; const w=$("boardWrap")||document.body; w.appendChild(b); }
+    b.style.display="block";
+    sdScoreHud(); sdModeBtn();
+    sdCoopBtn(); sdBrainBtn();
+    const you=sdTurn==="player", coop=coopOn;
+    b.innerHTML='<b style="color:'+(you?"#7dffc0":(coop?"#7dd8ff":"#ff8a9c"))+'">'+
+      (you?"\u25B6 YOUR TURN":(coop?"\u{1F91D} AI HELPING":"\u26A1 AI\u2019S TURN"))+'</b>';
+  }
+  function sdTick(){
+    if(!sdActive()){ return; }
+    if(state!=="play" || !active || resolving || bonusActive) return;
+    if(demoOn && !_sdDemo) return;                       // normal demo: the AI plays both turns itself
+    if(sdTurn!=="ai") return;
+    if(active!==_sdLast){                       // FIRST SIGHT: decide now, while the brick is at the top and
+      _sdLast=active; _sdSeen=nowMs(); _sdPlan=null;   // its reach covers the whole board. Waiting first lets it
+      if(!active.ag && !active.mate){                  // fall into the stack, where words become invisible.
+        const c=sdPickCol(active.letter);
+        const _pr=(_sdPickRow>=0)?_sdPickRow:landRowFor(c);
+        _sdPlan={ col:c, row:_sdPickRow, letter:active.letter, cand:_sdDbg.cand, reach:_sdDbg.reach||0,
+                  spell:(_pr>=0 && sdHelp(_pr,c,active.letter)>=1000),
+                  // Only pay for the readouts when the Brain UI is actually on: sdSeenWords and
+                  // sdGuarded each sweep the board through the dictionary.
+                  seen:(sdBrainUI?sdSeenWords(active.letter).slice(0,24):[]),
+                  guard:((sdBrainUI&&(coopOn||showdownOn))?sdGuarded().slice(0,10):[]) };
+      }
+      return;
+    }
+    if(nowMs()-_sdSeen < 420) return;                                  // readable pace
+    const _t0=nowMs(); _sdDbg.err=""; _sdDbg.steer=0; _sdDbg.lifted=0; _sdDbg.blocked=false;
+    if(active.ag){ _sdAct=true; hardDrop(); _sdAct=false; return; }
+    if(active.mate){ _sdAct=true; hardDrop(); _sdAct=false; return; }
+    const _c0=active.col;
+    let col;
+    if(_sdPlan && _sdPlan.letter===active.letter){     // execute the spawn-time decision
+      col=_sdPlan.col; _sdPickRow=_sdPlan.row; _sdDbg.cand=_sdPlan.cand; _sdDbg.reach=_sdPlan.reach;
+    } else { col=sdPickCol(active.letter); }
+    // The pick is guaranteed reachable (sdReach), so walk the brick there; slide when the lane
+    // is open at this height, otherwise ride up and cross. No silent give-up: if a step fails we
+    // re-pick from where we actually are rather than dumping the letter.
+    if(active.col!==col){
+      let g=0;
+      while(active && active.col!==col && g++<COLS*4){
+        const c0=active.col, next = active.col<col ? active.col+1 : active.col-1;
+        active.col=next; _sdDbg.steer++;
+        if(colClear(active.col)){ positionActive(); positionGhost(); continue; }
+        active.col=c0;
+        let lifted=false;
+        for(let r=Math.max(0,Math.floor(active.y/cell))-1; r>=0; r--){
+          const y0=active.y; active.y=r*cell; active.col=next;
+          if(colClear(active.col)){ positionActive(); positionGhost(); lifted=true; _sdDbg.lifted++; break; }
+          active.col=c0; active.y=y0;
+        }
+        if(!lifted){ _sdDbg.blocked=true; _sdStuck++; break; }
+      }
+    }
+    if(!active) return;
+    const land=landRowFor(active.col);
+    const _now=Math.max(0,Math.floor((active.y||0)/cell));
+    const _planWord = !!(_sdPlan && _sdPlan.letter===active.letter && _sdPlan.spell);
+    let fr=(_sdPickRow>=0 && _sdPickRow<land && _sdPickRow>=_now) ? _sdPickRow : 0;   // planned mid-air cell, if still above us
+    // A planned word must be honoured exactly: if the plan says DROP onto the word (fr==0),
+    // do NOT let the float heuristic hijack it into mid-air, or the word is destroyed.
+    // sdShouldFloat exists to hang a brick where it helps you LESS -- that is adversarial by
+    // construction, so it is never allowed to run in Co-op. A planned word is also never hijacked.
+    if(!fr && !_planWord && !coopOn) fr=sdShouldFloat(active.col, active.letter);
+    { const _r=(fr>0)?fr:landRowFor(active.col);
+      _sdDbg.move=++_sdMoves; _sdDbg.letter=active.letter; _sdDbg.from=_c0; _sdDbg.to=active.col; _sdDbg.row=_r;
+      _sdDbg.act=(fr>0)?"float":"drop"; _sdDbg.help=(_r>=0)?sdHelp(_r,active.col,active.letter):0;
+      // Telemetry must reflect the brain in use: co-op reports what it CREATED for you
+      // (sdAssist), never the adversarial denial metric. No sdDenial is read in co-op at all.
+      _sdDbg.deny=(_r<0)?0:(coopOn ? sdAssist(_r,active.col,active.letter) : sdDenial(_r,active.col));
+      _sdDbg.near=(_r>=0)?demoNeighbours(_r,active.col):0;
+      _sdDbg.word=""; if(_sdDbg.help>=1000 && _r>=0){ grid[_r][active.col]=active.letter;
+        const _w=wordsThroughCell(_r,active.col); _sdDbg.word=(_w[0]||[]).map(p=>grid[p.r][p.c]).join(""); grid[_r][active.col]=null; }
+      _sdDbg.wval = (_sdDbg.help>=1000 && _r>=0) ? Math.round(sdWordValue(_r,active.col,active.letter).v) : 0;
+      _sdDbg.spell=_sdDbg.help>=1000; if(_sdDbg.spell) _sdSpells++; else _sdBlocks++;
+      if(fr>0) _sdFloats++; _sdDbg.ms=Math.round(nowMs()-_t0);
+      let miss=null;
+      if(sdBrainUI && sdMode!=="block" && !_sdDbg.spell && _sdDbg.cand && /(^| )\d+:W/.test(_sdDbg.cand)){   // a word WAS on the table at decision time
+        const b=sdBestWord(active.letter); if(b){ miss=b; _sdMisses++; } }
+      _sdDbg.miss = miss ? (miss.word+" @r"+miss.r+"c"+miss.c) : "";
+      if(sdBrainUI){                             // UI off -> capture nothing, keep nothing (never return: the brick still has to be played)
+        _sdLog.unshift({ n:_sdDbg.move, L:_sdDbg.letter, from:_sdDbg.from, to:_sdDbg.to, row:_sdDbg.row,
+          act:_sdDbg.act, help:_sdDbg.help, deny:_sdDbg.deny, spell:_sdDbg.spell, word:_sdDbg.word, wval:_sdDbg.wval||0,
+          cand:_sdDbg.cand, reach:_sdDbg.reach||0, ms:_sdDbg.ms, miss:_sdDbg.miss, blocked:_sdDbg.blocked, mode:sdMode,
+          seen:(_sdPlan&&_sdPlan.seen)?_sdPlan.seen:[], guard:(_sdPlan&&_sdPlan.guard)?_sdPlan.guard:[] });
+        if(_sdLog.length>25){ const old=_sdLog.pop(); if(old){ old.seen=null; old.guard=null; } }   // release evicted entries
+        _sdVer++; sdPanel();
+      }
+    }
+    _sdAct=true;
+    try{
+      if(fr>0){ active.y=fr*cell; positionActive(); lockActive(); }    // shift-lock it into a mean overhang
+      else hardDrop();
+    }catch(e){ _sdDbg.err=(e&&e.message)||String(e); }
+    _sdAct=false;
+  }
+  function toggleShowdown(){
+    showdownOn=!showdownOn;
+    if(showdownOn && coopOn){ coopOn=false; sdMode="dual"; sdCoopBtn(); }   // one brain at a time
+    const b=$("bShowdown"); if(b){ b.textContent="Showdown: "+(showdownOn?"On":"Off"); b.classList.toggle("on",showdownOn); }
+    clearInterval(_sdTimer); _sdTimer=0; _sdLast=null;
+    if(showdownOn){
+      sdTurn="ai"; playerScore=0; aiScore=0; _sdMoves=_sdSpells=_sdBlocks=_sdFloats=_sdStuck=0; _sdTimer=setInterval(sdTick,110);   // spawn() flips first -> your piece is the player's
+      try{ toast("\u2694 Showdown \u2014 you place a letter, the AI answers"); }catch(_){}
+    } else { sdAiCells.clear(); playerScore=0; aiScore=0; }
+    sdScoreHud(); sdModeBtn();
+    if(!showdownOn){ try{ toast("Showdown off"); }catch(_){} }
+    try{ renderStack(); }catch(_){}
+    sdBadge();
+  }
   function togglePause(){
     if(state==="play"){ state="pause"; $("bPause").textContent="▶"; }
     else if(state==="pause"){ state="play"; lastT=0; $("bPause").textContent="⏸"; }
@@ -4646,6 +5904,18 @@
     { let _obs=0,_holes=0; for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){ const v=grid[r][c]; if(v===OBSTACLE)_obs++; else if(v===BLACKHOLE)_holes++; }
       s+="obstacles="+_obs+"   holes="+_holes+"   bhPull="+(bhPower===0?"off":bhPower===1?"contact":"1cell")+"\n"; }
     { const mr=misspellOn?misspellRuns().length:0; s+="misspell="+(misspellOn?"on":"off")+"   runs="+mr+"   chips="+_missChips.size+"   dismissed="+_missDismissed.size+"\n"; }
+    if(sdActive()){ const d=_sdDbg;
+      s+="showdown turn="+sdTurn+"   you="+playerScore+"   ai="+aiScore+"   aiCells="+sdAiCells.size+"\n";
+      s+="  moves="+_sdMoves+" spell="+_sdSpells+" block="+_sdBlocks+" float="+_sdFloats+" walled="+_sdStuck+"   timer="+(_sdTimer?"on":"OFF")+"   gate="+(sdBlocked()?"LOCKED":"open")+"\n";
+      s+="  last="+(d.move?("#"+d.move+" "+d.letter+" c"+d.from+">"+d.to+" r"+d.row+" "+d.act+(d.spell?" SPELL":"")+" help="+d.help+" deny="+d.deny+" "+d.ms+"ms"):"-")+"\n";
+      s+="  cand="+(d.cand||"-")+"\n";
+      { const v=(_sdLog[0]&&_sdLog[0].seen)?_sdLog[0].seen:[]; const top=v.reduce((m,x)=>Math.max(m,x.v||0),0);
+        s+="  vision="+new Set(v.map(x=>x.w)).size+"w/"+v.length+"spots  letter="+(d.letter||"-")+"="+(d.letter?letterScore(d.letter):0)+
+           "  best*"+top+"  took*"+(d.wval||0)+"\n";
+        v.slice().sort((a,b)=>(b.v||0)-(a.v||0)).slice(0,3).forEach(x=>{
+          s+="    "+x.w+" *"+(x.v||0)+" ("+[...x.w].map(ch=>ch+"="+letterScore(ch)).join("+")+") @r"+x.r+"c"+x.c+"\n"; }); }
+      if(d.err) s+="  AI ERROR: "+d.err+"\n";
+    }
     s+="antic="+(_anticCells?("\u2192"+(_anticWord||"?")):"idle")+"   prox="+_anticProx.toFixed(2)+"   bricks="+_anticCells+"\n";
     if(e){ s+="\u26a0 LAST ERROR ["+e.kind+"] +"+e.t+"ms\n"+e.msg+"\n"+((e.stack||"").split("\n")[0]||""); }
     else { s+="\u2713 no errors captured"; }
@@ -4863,7 +6133,7 @@
     gb.innerHTML=
       '<h3>\u25E7 Field Guide</h3>'+
       '<div class="gb-tag">Live reference \u2014 mirrors the debug readout on the left. Tap a topic to jump.</div>'+
-      '<div class="gb-nav"><a data-go="gDebug">Debug HUD</a><a data-go="gMonitor">Monitor</a><a data-go="gPanels">Stat panels</a><a data-go="gModes">Modes</a><a data-go="gToggles">Toggles</a><a data-go="gBlocks">Blocks &amp; Holes</a><a data-go="gDesign">Design</a><a data-go="gMiss">Misspell</a><a data-go="gBit">BIT</a></div>'+
+      '<div class="gb-nav"><a data-go="gDebug">Debug HUD</a><a data-go="gMonitor">Monitor</a><a data-go="gPanels">Stat panels</a><a data-go="gModes">Modes</a><a data-go="gToggles">Toggles</a><a data-go="gBlocks">Blocks &amp; Holes</a><a data-go="gDesign">Design</a><a data-go="gMiss">Misspell</a><a data-go="gShow">Showdown</a><a data-go="gLv">Letter values</a><a data-go="gVis">AI vision</a><a data-go="gBit">BIT</a></div>'+
       '<h4 id="gDebug">Debug HUD (bottom-left) \u2014 field by field</h4>'+
       '<p>The panel opposite this one prints the engine\u2019s live internals:</p>'+
       '<div class="gb-row"><span class="k">mode</span> \u2014 active mode: classic, antigrav, or sandbox.</div>'+
@@ -4913,6 +6183,19 @@
       '<h4 id="gMiss">Misspell</h4>'+
       '<p>Every dictionary word gets a signature made of its sorted letters (GUARD becomes ADGRU). With the toggle on, each run of bricks is checked: if the run is not a word but its signature matches one, the letters turn red and a jade chip pops above showing every correct spelling, joined by a bar. Letters that need to move animate to green. The chip stays until clicked; click any red letter to bring it back.</p>'+
       '<p>Debug readouts: <span class="k">misspell</span> on/off · <span class="k">runs</span> misspelled words currently on the board · <span class="k">chips</span> correction chips showing · <span class="k">dismissed</span> chips clicked away · <span class="k">minlen</span> the shortest run length checked (follows the mode) · <span class="k">anagrams</span> signatures in the lookup.</p>'+
+      '<h4 id="gShow">Showdown (debug)</h4>'+
+      '<p>You and the AI trade turns; the AI banks words it can spell and otherwise denies yours. The monitor block only appears while Showdown is on.</p>'+
+      '<p><span class="k">turn</span> whose piece is live (flips in spawn, before the brick is drawn) \u00b7 <span class="k">you / ai</span> duel scores, credited on clear by whose piece caused it \u00b7 <span class="k">moves / spelled / blocked</span> AI decisions, split by whether it completed a word \u00b7 <span class="k">floats</span> mid-air shift-locks \u00b7 <span class="k">walled-in</span> times it could not reach its target column.</p>'+
+      '<p><span class="k">last</span> the AI\u2019s latest move: <i>#n letter colFrom\u2192colTo row act</i>, with SPELL when it took a word \u00b7 <span class="k">help</span> its score for that cell (\u22651000 = completes a word) \u00b7 <span class="k">deny</span> how much word potential it stole from you \u00b7 <span class="k">near</span> adjacent bricks \u00b7 <span class="k">steer / lift</span> sideways steps and upward hops used to get there \u00b7 <span class="k">ms</span> think time.</p>'+
+      '<p><span class="k">cand</span> the full candidate table, one entry per column (W = completes a word, otherwise the raw score \u2014 highest wins) \u00b7 <span class="k">aiCells</span> bricks tracked as the AI\u2019s (drawn pink; follows gravity) \u00b7 <span class="k">timer</span> the AI tick interval \u00b7 <span class="k">gate</span> whether your input is locked \u00b7 <span class="k">soft / slow</span> held fall states (if either sticks ON, that is the runaway-speed bug) \u00b7 <span class="k">AI ERROR</span> any exception thrown while it acted.</p>'+
+      '<h4 id="gLv">Letter values &amp; word worth</h4>'+
+      '<p>A bolt-on table scores every letter 1\u201310 from real English frequency \u2014 the rarer the letter, the higher the score. <span class="k">1</span> E \u00b7 <span class="k">2</span> T A O I N S H R \u00b7 <span class="k">3</span> D L \u00b7 <span class="k">4</span> C U M W F G Y P \u00b7 <span class="k">5</span> B V \u00b7 <span class="k">6</span> K \u00b7 <span class="k">9</span> J X Q \u00b7 <span class="k">10</span> Z.</p>'+
+      '<p>A word\u2019s worth is the sum of its letters, compounded by length (\u00d7 1 + (len\u22121) \u00d7 0.15). So GAS = 4+2+2 \u2192 \u260510, GUM = 4+4+4 \u2192 \u260516, JOKE \u2192 \u260526, QUARTZ \u2192 \u260551. The engine never reads this table; only the AI does.</p>'+
+      '<p>When several words are available the AI takes the <b>highest-worth</b> one. This is additive on top of the existing word test, so it changes <i>which</i> word it takes, never <i>whether</i> it takes one.</p>'+
+      '<h4 id="gVis">AI vision (Showdown / Co-op)</h4>'+
+      '<p>The AI Brain panel prints, for the letter in hand, every word it can complete and the arithmetic behind each one.</p>'+
+      '<p><span class="k">vision N words / M spots</span> \u2014 distinct words completable and how many cells complete them \u00b7 <span class="k">letter X=n</span> \u2014 the held letter and its value \u00b7 <span class="k">best \u2605N</span> \u2014 the highest worth on the board \u00b7 <span class="k">took \u2605N</span> \u2014 what it actually took; <span class="k">MAX</span> means it took the best, <span class="k">NOT-MAX</span> flags a scoring fault \u00b7 <span class="k">top:</span> the best few, as <i>WORD\u2605value@rXcY</i>.</p>'+
+      '<p>Each panel row reads <i>G4+U4+M4 \u00d71.30 = \u260516 @r11c2</i>, with <b>\u25B8 TAKES</b> marking the pick and <i>shift-lock</i> marking a word that needs a mid-air lock. The <span class="k">copy</span> button dumps the same maths as plain text.</p>'+
       '<h4 id="gBit">Built-In Test (BIT)</h4>'+
       '<p>From the home screen the BIT self-checks the engine (word detection, gravity, clears, tutor, obstacles, black holes) and reports pass/fail with a reproducible seed. Run 1\u201310 randomized passes at once. It saves and restores state, so it never touches a live game.</p>';
     document.body.appendChild(gb);
@@ -5370,6 +6653,8 @@
     // Bigger = faster/harder, smaller = slower/easier. (Speed also rises with level.)
     cps=2.2*speedMul; softDrop=false; slowFall=false; consonantStreak=0; resolving=false; parts=[]; clearDebris(); heatCells=[]; smoke=[];
     lockedSet=new Set();
+    { const ob=document.getElementById("overBanner"); if(ob) ob.classList.remove("go"); }
+    sdTurn="ai"; _sdLast=null; _sdPlan=null; sdAiCells.clear(); playerScore=0; aiScore=0; _sdMoves=_sdSpells=_sdBlocks=_sdFloats=_sdStuck=0; if(sdActive()) sdBadge();   // spawn() flips -> player moves first
     jumbleUsed=false; { const jb=$("bJumble"); if(jb){ jb.textContent="Jumble"; jb.classList.remove("on"); jb.disabled=false; } }
     updateHud();
     $("startScreen").classList.add("hide");
@@ -5440,6 +6725,7 @@
   //    AI puts each brick during Demo / AI Play. Curious folks can peek, but
   //    you don't need to touch it to change the look or rules of the game.
   function demoTick(){
+    if(_sdDemo && showdownOn && sdTurn==="ai") return;   // Showdown demo: the adversarial AI owns this turn
     if(!demoOn){ stopDemo(true); return; }
     if(state==="pause") return;                            // wait through a pause
     if(state!=="play"){ stopDemo(true); return; }          // game over / left to menu → end + restore mode
@@ -5499,6 +6785,17 @@
     _demoTimer=setInterval(demoTick, 110);
     if(typeof toast==="function") toast("Demo: AI playing "+(gameMode==="antigrav"?"Anti-Gravity":"Classic")+" \u2014 hit Take Over to play");
   }
+  function startShowdownDemo(){
+    if(state==="play") return;
+    _demoPrevMode=gameMode; gameMode="classic";            // Showdown is a Main-game duel
+    _sdDemo=true; demoOn=true; ensureDemoBadge(true); _aiBtn(true);
+    if(!showdownOn){ const b=$("bShowdown"); if(b) b.click(); }   // reuse the real toggle
+    startGame();
+    clearInterval(_demoTimer); _demoLast=null;
+    _demoTimer=setInterval(demoTick, 110);
+    clearInterval(_sdTimer); _sdLast=null; _sdTimer=setInterval(sdTick,110);
+    if(typeof toast==="function") toast("\u2694 Showdown demo \u2014 greedy AI vs adversarial AI");
+  }
   // Hand the CURRENT live game to the AI mid-run — same mode, same board, no restart.
   function aiTakeover(){
     if(state!=="play" || demoOn || bonusActive) return;     // only mid-game, not if AI already driving or mid-bonus
@@ -5510,7 +6807,7 @@
   }
   function _aiBtn(on){ const b=$("bAiPlay"); if(b) b.classList.toggle("on", !!on); }
   function stopDemo(restoreMode){
-    demoOn=false; clearInterval(_demoTimer); _demoTimer=0;
+    demoOn=false; _sdDemo=false; clearInterval(_demoTimer); _demoTimer=0;
     _demoLast=null; _demoTarget=null; ensureDemoBadge(false); _aiBtn(false);
     if(restoreMode) gameMode=_demoPrevMode;                // hand the menu selection back (safe: no live game)
   }
